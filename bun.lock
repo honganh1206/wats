@@ -1,0 +1,25 @@
+{
+  "lockfileVersion": 1,
+  "configVersion": 0,
+  "workspaces": {
+    "": {
+      "name": "wats",
+      "dependencies": {
+        "ohm-js": "^17.4.0",
+      },
+      "devDependencies": {
+        "@types/node": "^25.2.3",
+        "typescript": "^5.9.3",
+      },
+    },
+  },
+  "packages": {
+    "@types/node": ["@types/node@25.2.3", "", { "dependencies": { "undici-types": "~7.16.0" } }, "sha512-m0jEgYlYz+mDJZ2+F4v8D1AyQb+QzsNqRuI7xg1VQX/KlKS0qT9r1Mo16yo5F/MtifXFgaofIFsdFMox2SxIbQ=="],
+
+    "ohm-js": ["ohm-js@17.4.0", "", {}, "sha512-WC3eMImUWrXd95iZQ84odjxEBbXgm4yFs1louQRrRbOpCWtG+RDmSQ8hu3sDucflwTnc1jBma99DrP7BegnAng=="],
+
+    "typescript": ["typescript@5.9.3", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw=="],
+
+    "undici-types": ["undici-types@7.16.0", "", {}, "sha512-Zz+aZWSj8LE6zoxD+xrjh4VfkIG8Ya6LvYkZqtUQGJPZjYl53ypCaUwWqo7eI0x66KBGeRo+mlBEkMSeSZ38Nw=="],
+  }
+}
