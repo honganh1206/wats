@@ -35,6 +35,6 @@ Each section has three parts:
 2. *Size* represents the size of the section payload.
 3. *Contents* vary based on section type, but usually structured as a list of zero or more entries?.
 
-All integers in a WASM module are encoded with a *variable-length encoding* following LEB128 (Little-Endian Base 128), meaning if the integer does not fit into one byte, the algorithm will try to fit it in two, then three, and so on.
+All integers in a WASM module are encoded with a [[Variable-Length Encoding]] following LEB128 (Little-Endian Base 128), meaning if the integer does not fit into one byte, the algorithm will try to fit it in two, then three, and so on.
 
 For non-negative integers that fit in a single byte, no encoding is necessary.

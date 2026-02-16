@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
-import { typesec, typeidx, funcsec, functype, codesec, codes, func, instr } from "../../src/wasm/sections";
+import { typesec, typeidx, funcsec, functype, codesec, codes, func, instr, exportsec, export_ } from "../../src/wasm/sections";
 import { flatten } from "../../src/wasm/utils";
 
 test('functype with no params and no results', () => {
@@ -46,4 +46,25 @@ test('codesec wraps codes in a section', () => {
   const result = codesec([codes(func([], [instr.end]))]);
   // section id 10
   assert.strictEqual(result[0], 10);
+});
+
+test('export_ encodes name and exportdesc', () => {
+  const result = export_('main', [0x00, [0]]);
+  // first element is vec-encoded name, second is exportdesc
+  const name = result[0] as number[][];
+  // vec prepends length: "main" is 4 bytes
+  assert.deepStrictEqual(flatten(name)[0], 4);
+});
+
+test('export_ encodes name bytes correctly', () => {
+  const result = flatten(export_('ab', [0x00, [0]]));
+  // "ab" = [0x61, 0x62], vec prepends length 2
+  assert.ok(result.includes(0x61));
+  assert.ok(result.includes(0x62));
+});
+
+test('exportsec wraps exports in a section', () => {
+  const result = exportsec([export_('main', [0x00, [0]])]);
+  // section id 7
+  assert.strictEqual(result[0], 7);
 });

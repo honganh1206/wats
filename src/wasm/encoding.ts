@@ -12,17 +12,17 @@ export type ByteArray = Byte | ByteArray[];
 // followed by the encoding of their element sequence
 // export type Vector = (number | number[])[];
 
-export function u32(v: number) : ByteArray {
- assert(v >= 0, `Value is negative: ${v}`);
- // NOTE: No encoding if we accept positive values that fit into a single byte
- if (v < 128) {
+export function u32(v: number): ByteArray {
+  assert(v >= 0, `Value is negative: ${v}`);
+  // NOTE: No encoding if we accept positive values that fit into a single byte
+  if (v < 128) {
     return [v];
- } else {
-   throw new Error('Not implemented');
- }
+  } else {
+    throw new Error('Not implemented');
+  }
 }
 
-export function i32(v: number) : ByteArray {
+export function i32(v: number): ByteArray {
   if (v >= 0 || v < 64) {
     return [v];
   } else {
@@ -30,6 +30,34 @@ export function i32(v: number) : ByteArray {
   }
 }
 
-export function vec(elements: ByteArray[]) : ByteArray[]{
+export function vec(elements: ByteArray[]): ByteArray[] {
   return [u32(elements.length), elements];
+}
+
+const SEVEN_BIT_MASK_BIG_INT = 0b01111111n;
+const CONTINUATION_BIT = 0b10000000;
+
+// Encode all numbers that fit into 7 bits from 0 to 127
+export function leb128(v: number | bigint): ByteArray {
+  let val = typeof v === "number" ? BigInt(v) : v;
+  let more = true;
+  const r: ByteArray = [];
+
+  while (more) {
+    // Extract the lowest 7 bits of val
+    // and pack them into each output byte.
+    // The 8th bit is reserved for the continuation bit
+    const b = Number(val & SEVEN_BIT_MASK_BIG_INT);
+    // Shift to the next 7 bits to process
+    val = val >> 7n;
+    more = val !== 0n;
+    if (more) {
+      // Set the continuation bit in the current byte
+      r.push(b | CONTINUATION_BIT);
+    } else {
+      r.push(b);
+    }
+  }
+
+  return r;
 }

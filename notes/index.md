@@ -77,3 +77,5 @@ wafer-compiler/
 ```
 
 [[Minimum Viable Compiler]]
+
+[[Variable-Length Integer Encoding]]
