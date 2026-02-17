@@ -8,26 +8,36 @@ export type Byte = number;
 // or arbitrarily nested arrays of bytes
 export type ByteArray = Byte | ByteArray[];
 
-// Vectors are encoded with their u32 length
-// followed by the encoding of their element sequence
-// export type Vector = (number | number[])[];
+const MIN_U32 = 0;
+const MAX_U32 = 2 ** 32 - 1;
 
 export function u32(v: number): ByteArray {
   assert(v >= 0, `Value is negative: ${v}`);
-  // NOTE: No encoding if we accept positive values that fit into a single byte
-  if (v < 128) {
-    return [v];
-  } else {
-    throw new Error('Not implemented');
+  if (v < MIN_U32 || v > MAX_U32) {
+    throw Error(`Value out of range for u32: ${v}`);
   }
+
+  return leb128(v);
 }
 
+const MIN_I32 = -(2 ** 32 / 2);
+
+const MAX_I32 = 2 ** 32 / 2 - 1;
+
+// Input might be an unsigned representation of a negative number e.g., 0xFFFFFFFF = 4294967295 for -1
+// so we need to convert back to the actual negative number
+const I32_NEG_OFFSET = 2 ** 32;
+
 export function i32(v: number): ByteArray {
-  if (v >= 0 || v < 64) {
-    return [v];
-  } else {
-    throw new Error('Not implemented')
+  if (v > MAX_U32 || v < MIN_I32) {
+    throw Error(`Value out of range for i32: ${v}`);
+  } 
+
+  if (v > MAX_I32) {
+    return sleb128(v - I32_NEG_OFFSET);
   }
+
+  return sleb128(v);
 }
 
 export function vec(elements: ByteArray[]): ByteArray[] {
@@ -63,7 +73,7 @@ export function leb128(v: number | bigint): ByteArray {
 }
 
 export function sleb128(v: number | bigint): ByteArray {
-  let val = typeof v === "number" ? BigInt(v): v;
+  let val = typeof v === "number" ? BigInt(v) : v;
   let more = true;
 
   const r: ByteArray = [];

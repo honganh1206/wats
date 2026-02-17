@@ -8,17 +8,48 @@ test('u32 encodes values less than 128 as single byte', () => {
   assert.deepStrictEqual(u32(127), [127]);
 });
 
+test('u32 encodes multi-byte values', () => {
+  assert.deepStrictEqual(u32(128), [0x80, 1]);
+  assert.deepStrictEqual(u32(256), [0x80, 2]);
+  assert.deepStrictEqual(u32(624485), [0xe5, 0x8e, 0x26]);
+});
+
+test('u32 encodes boundary values', () => {
+  // MAX_U32 = 4,294,967,295
+  assert.deepStrictEqual(u32(2 ** 32 - 1), leb128(2 ** 32 - 1));
+});
+
 test('u32 rejects negative values', () => {
   assert.throws(() => u32(-1));
 });
 
-test('u32 throws for values >= 128', () => {
-  assert.throws(() => u32(128));
+test('u32 rejects values above u32 max', () => {
+  assert.throws(() => u32(2 ** 32));
 });
 
 test('i32 encodes small non-negative values as single byte', () => {
   assert.deepStrictEqual(i32(0), [0]);
   assert.deepStrictEqual(i32(63), [63]);
+});
+
+test('i32 encodes small negative values', () => {
+  assert.deepStrictEqual(i32(-1), [0x7f]);
+  assert.deepStrictEqual(i32(-64), [0x40]);
+});
+
+test('i32 encodes multi-byte negative values', () => {
+  assert.deepStrictEqual(i32(-65), [0xbf, 0x7f]);
+  assert.deepStrictEqual(i32(-128), [0x80, 0x7f]);
+});
+
+test('i32 encode difference for numbers with most significant bit set', () => {
+  assert.deepStrictEqual(i32(-(2 ** 32 / 2)), i32(2 ** 31));
+  assert.deepStrictEqual(i32(-1), i32(2 ** 32 - 1));
+})
+
+test('i32 rejects out of range values', () => {
+  assert.throws(() => i32(-(2 ** 31) - 1));
+  assert.throws(() => i32(2 ** 32));
 });
 
 test('vec prepends length to elements', () => {
