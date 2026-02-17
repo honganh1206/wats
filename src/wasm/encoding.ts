@@ -61,3 +61,29 @@ export function leb128(v: number | bigint): ByteArray {
 
   return r;
 }
+
+export function sleb128(v: number | bigint): ByteArray {
+  let val = typeof v === "number" ? BigInt(v): v;
+  let more = true;
+
+  const r: ByteArray = [];
+
+  while (more) {
+    const b = Number(val & SEVEN_BIT_MASK_BIG_INT);
+    // Isolate bit 6 and check if either 1 or 0
+    const signBitSet = !!(b & 0x40);
+
+    val = val >> 7n;
+
+    // Check for both unsigned (val is 0 and sign bit 6 clear) and signed (val is -1 and sign bit 6 set)
+    if ((val === 0n && !signBitSet) || (val === -1n && signBitSet)) {
+      // No bit left to process or highest negative value?
+      more = false;
+      r.push(b);
+    } else {
+      r.push(b | CONTINUATION_BIT);
+    }
+  }
+
+  return r;
+}
