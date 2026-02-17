@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
-import { u32, i32, vec, leb128, sleb128 } from "../../src/wasm/encoding";
+import { u32, i32, vec, leb128, sleb128, i64 } from "../../src/wasm/encoding";
 
 test('u32 encodes values less than 128 as single byte', () => {
   assert.deepStrictEqual(u32(0), [0]);
@@ -43,6 +43,8 @@ test('i32 encodes multi-byte negative values', () => {
 });
 
 test('i32 encode difference for numbers with most significant bit set', () => {
+  // Meaning unsinged value will be encoded like signed value?
+  // where the I32_NEG_OFFSET kicks in
   assert.deepStrictEqual(i32(-(2 ** 32 / 2)), i32(2 ** 31));
   assert.deepStrictEqual(i32(-1), i32(2 ** 32 - 1));
 })
@@ -50,6 +52,16 @@ test('i32 encode difference for numbers with most significant bit set', () => {
 test('i32 rejects out of range values', () => {
   assert.throws(() => i32(-(2 ** 31) - 1));
   assert.throws(() => i32(2 ** 32));
+});
+
+test('i64 encode difference for numbers with most significant bit set', () => {
+  assert.deepStrictEqual(i64(-(2n ** 64n / 2n)), i64(2n ** 63n));
+  assert.deepStrictEqual(i64(- 1n), i64(2n ** 64n - 1n));
+})
+
+test('i64 rejects out of range values', () => {
+  assert.throws(() => i64(2n ** 64n));
+  assert.throws(() => i64(-(2n ** 64n / 2n) -1n)); 
 });
 
 test('vec prepends length to elements', () => {

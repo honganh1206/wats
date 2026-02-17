@@ -23,18 +23,45 @@ export function u32(v: number): ByteArray {
 const MIN_I32 = -(2 ** 32 / 2);
 
 const MAX_I32 = 2 ** 32 / 2 - 1;
-
 // Input might be an unsigned representation of a negative number e.g., 0xFFFFFFFF = 4294967295 for -1
+
 // so we need to convert back to the actual negative number
 const I32_NEG_OFFSET = 2 ** 32;
 
 export function i32(v: number): ByteArray {
   if (v > MAX_U32 || v < MIN_I32) {
     throw Error(`Value out of range for i32: ${v}`);
-  } 
+  }
 
   if (v > MAX_I32) {
     return sleb128(v - I32_NEG_OFFSET);
+  }
+
+  return sleb128(v);
+}
+
+const MIN_U64 = 0n;
+const MAX_U64 = 2n ** 64n - 1n;
+
+export function u64(v: bigint): ByteArray {
+  if (v < MIN_U64 || v > MAX_U64) {
+    throw Error(`Value out of range for u64: ${v}`);
+  }
+
+  return leb128(v);
+}
+
+const MIN_I64 = -(2n ** 64n / 2n);
+const MAX_I64 = 2n ** 64n / 2n - 1n;
+const I64_NEG_OFFSET = 2n ** 64n;
+
+export function i64(v: bigint): ByteArray {
+  if (v < MIN_I64 || v > MAX_U64) {
+    throw Error(`Value out of range for i64: ${v}`);
+  }
+
+  if (v > MAX_I64) {
+    return sleb128(v - I64_NEG_OFFSET);
   }
 
   return sleb128(v);
