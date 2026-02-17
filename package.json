@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "check": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test tests/**/*.test.ts"
+    "test": "node --experimental-strip-types --test test/**/*.test.ts"
   },
   "keywords": [],
   "author": "",
