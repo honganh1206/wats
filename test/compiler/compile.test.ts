@@ -1,5 +1,5 @@
 import test from "node:test";
-import { compile } from "../../src/wasm/module"
+import { compile } from "../../src/compiler/compile"
 import assert from "node:assert";
 
 test('compile result compiles to a WebAssembly object', async () => {

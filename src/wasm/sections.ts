@@ -1,11 +1,6 @@
 import { Byte, ByteArray, u32, vec } from "./encoding";
 import { flatten, stringToBytes } from "./utils";
 
-// Map from instruction name to opcode
-export const instr = {
-  end: 0x0b,
-}
-
 const SECTION_ID_TYPE = 1;
 
 export function typesec(functypes: ByteArray[][]): ByteArray[] {

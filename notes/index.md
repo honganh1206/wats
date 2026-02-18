@@ -79,3 +79,5 @@ wafer-compiler/
 [[Minimum Viable Compiler]]
 
 [[Variable-Length Integer Encoding]]
+
+[[Writing a Compiler with Ohm]]

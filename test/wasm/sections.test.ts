@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert";
-import { typesec, typeidx, funcsec, functype, codesec, codes, func, instr, exportsec, export_ } from "../../src/wasm/sections";
+import { typesec, typeidx, funcsec, functype, codesec, codes, func, exportsec, export_ } from "../../src/wasm/sections";
 import { flatten } from "../../src/wasm/utils";
+import { instr } from "../../src/wasm/instructions";
 
 test('functype with no params and no results', () => {
   assert.deepStrictEqual(functype([], []), [0x60, [[0], []], [[0], []]]);

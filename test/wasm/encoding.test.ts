@@ -61,7 +61,7 @@ test('i64 encode difference for numbers with most significant bit set', () => {
 
 test('i64 rejects out of range values', () => {
   assert.throws(() => i64(2n ** 64n));
-  assert.throws(() => i64(-(2n ** 64n / 2n) -1n)); 
+  assert.throws(() => i64(-(2n ** 64n / 2n) - 1n));
 });
 
 test('vec prepends length to elements', () => {
