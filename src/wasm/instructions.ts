@@ -3,6 +3,8 @@ export const instr = {
   end: 0x0b,
   i32: {
     'const': 0x41,
+    'add': 0x6a,
+    'sub': 0x6b,
   },
   i64: {
     'const': 0x42,

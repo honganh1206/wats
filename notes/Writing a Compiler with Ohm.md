@@ -10,10 +10,13 @@ Usually, we write semantic actions directly inside the grammar, but with Ohm we 
 
 An operation traverses the parse tree, and invoke the appropriate semantic action for each node it encounters.
 
-## WASM Value Types
+An operation includes semantic actions like `Main`, and each action can invoke any operation it needs via method calls.
 
-Everything WASM programs do boils down to **operations on primitive values**.
+## Semantic Action Arguments
 
-Four types of primitive values: `i32, i64, f32, f64`
+Each argument represents a child node.
 
-Most WASM instructions are numeric instructions that examine or manipulate primitive values.
+When an action is invoked to handle a specific node in the parse tree, the arguments in the action represent that node's children.
+
+The number of arguments a function takes is called its **arity** and each rule body has an arity.
+

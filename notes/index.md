@@ -81,3 +81,5 @@ wafer-compiler/
 [[Variable-Length Integer Encoding]]
 
 [[Writing a Compiler with Ohm]]
+
+[[About WASM]]
