@@ -20,3 +20,18 @@ When an action is invoked to handle a specific node in the parse tree, the argum
 
 The number of arguments a function takes is called its **arity** and each rule body has an arity.
 
+## Inline rule declarations
+
+Every branch of an alternation must have the same arity.
+
+```sh
+# Example
+PrimaryExpr = "(" Expr ")" -- paren
+            | number
+
+# Example is equivalent to this
+# and both branches of PrimaryExpr have an arity of 1
+PrimaryExpr = PrimaryExpr_paren
+            | number
+PrimaryExpr_paren = "(" Expr ")"
+```

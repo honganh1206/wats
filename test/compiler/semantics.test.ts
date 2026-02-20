@@ -34,6 +34,17 @@ test('operation toWasm', () => {
       instr.end,
     ].flat(),
   );
+  assert.deepEqual(
+    toWasmFlat('6 / (2 * 1)'),
+    [
+      [instr.i32.const, 6],
+      [instr.i32.const, 2],
+      [instr.i32.const, 1],
+      instr.i32.mul,
+      instr.i32.div_s,
+      instr.end,
+    ].flat(),
+  );
 })
 
 function toWasmFlat(input: string) {

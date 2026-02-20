@@ -5,6 +5,9 @@ export const instr = {
     'const': 0x41,
     'add': 0x6a,
     'sub': 0x6b,
+    'mul': 0x6c,
+    // Signed integers
+    'div_s': 0x6d,
   },
   i64: {
     'const': 0x42,
