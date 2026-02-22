@@ -35,3 +35,11 @@ PrimaryExpr = PrimaryExpr_paren
             | number
 PrimaryExpr_paren = "(" Expr ")"
 ```
+
+## Declaring locals
+
+We need to declare the type of the variable(s) and a way to map identifiers to variable indices (symbol table)
+
+We use a symbol table to associate each variable reference to a declaration in a given scope.
+
+We can use `_default` in an operation (like default in switch statement) in case there is no matching action.

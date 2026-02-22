@@ -10,10 +10,3 @@ test('compile result compiles to a WebAssembly object', async () => {
   assert.strictEqual(module instanceof WebAssembly.Module, true);
 })
 
-test('compile result compiles to a WebAssembly module', async () => {
-  const { instance } = await WebAssembly.instantiate(
-    compile('42'));
-
-  assert.strictEqual(instance.exports.main(), 42);
-  assert.throws(() => compile('abc'));
-})

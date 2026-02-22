@@ -1,19 +1,16 @@
 import test from "node:test";
-import { semantics } from "../../src/compiler/semantics"
 import { parser } from "../../src/compiler/grammar";
 import assert from "node:assert";
 import { instr } from "../../src/wasm/instructions";
-
-const sem = (input: string) => semantics(parser.match(input));
-
-test('operation jsValue', () => {
-  assert.equal(sem('42').jsValue(), 42);
-  assert.equal(sem('0').jsValue(), 0);
-  assert.equal(sem('99').jsValue(), 99);
-})
+import { buildSymbolTable } from "../../src/compiler/symbol";
+import { defineToWasm } from "../../src/compiler/semantics";
 
 test('operation toWasm', () => {
   assert.deepEqual(toWasmFlat('1'), [instr.i32.const, 1, instr.end]);
+  assert.deepEqual(
+    toWasmFlat('42'),
+    [instr.i32.const, 42, instr.end]
+  );
   assert.deepEqual(
     toWasmFlat('1 + 2'),
     [
@@ -48,6 +45,13 @@ test('operation toWasm', () => {
 })
 
 function toWasmFlat(input: string) {
-  const bytes = sem(input).toWasm();
+  const matchResult = parser.match(input);
+  const symbols = buildSymbolTable(parser, matchResult);
+  // Separate semantics instance in test just to be sure
+  const semantics = parser.createSemantics();
+  const localVars = symbols.get('main');
+  assert.ok(localVars);
+  defineToWasm(semantics, localVars);
+  const bytes = semantics(matchResult).toWasm();
   return bytes.flat(Infinity);
 }

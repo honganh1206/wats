@@ -8,7 +8,7 @@ Four types of primitive values: `i32, i64, f32, f64`
 
 Most WASM instructions are numeric instructions that examine or manipulate primitive values.
 
-
+> Nothing in WASM is referred to by name. We use indexes.
 
 ## WASM Module
 

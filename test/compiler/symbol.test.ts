@@ -24,4 +24,4 @@ test('symbol table', () => {
   assert.strictEqual(resolveSymbol({ sourceString: 'x' } as Node, localVars).idx, 0);
   assert.strictEqual(resolveSymbol({ sourceString: 'y' } as Node, localVars).idx, 1);
   assert.throws(() => resolveSymbol({ sourceString: 'z' } as Node, localVars));
-})
+});

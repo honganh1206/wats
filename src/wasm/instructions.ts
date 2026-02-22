@@ -1,3 +1,5 @@
+import { Byte, ByteArray, u32 } from "./encoding"
+
 // Map from instruction name to opcode
 export const instr = {
   end: 0x0b,
@@ -17,7 +19,15 @@ export const instr = {
   },
   f64: {
     'const': 0x44,
-  }
+  },
+  local: {
+    // Push value to stack
+    'get': 0x20,
+    // Set value at index x and remove from the stack
+    'set': 0x21,
+    // Like set but retain the value of the stack
+    'tee': 0x22,
+  },
 }
 
 export const valtype = {
@@ -27,3 +37,8 @@ export const valtype = {
   f64: 0x7c,
 }
 
+export const localidx = (x: number) => u32(x);
+
+export function locals(n: number, type: Byte): ByteArray[] {
+  return [u32(n), type];
+}

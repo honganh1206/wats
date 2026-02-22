@@ -1,6 +1,6 @@
 import { Grammar, MatchResult, Node } from "ohm-js";
 
-type Symbol = {
+export type Symbol = {
   name: string;
   idx: number;
   what: 'local'; // Could be union type?
