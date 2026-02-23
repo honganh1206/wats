@@ -42,6 +42,34 @@ test('operation toWasm', () => {
       instr.end,
     ].flat(),
   );
+  // Test set
+  assert.deepEqual(
+    toWasmFlat('let x = 10; 42'),
+    [
+      [instr.i32.const, 10, instr.local.set, 0], // let x = 10;
+      [instr.i32.const, 42],
+      instr.end,
+    ].flat(),
+  );
+  // Test get
+  assert.deepEqual(
+    toWasmFlat('let x = 10; x'),
+    [
+      [instr.i32.const, 10, instr.local.set, 0], // let x = 10;
+      [instr.local.get, 0], // x
+      instr.end,
+    ].flat(),
+  );
+  // Test drop and tee
+  assert.deepEqual(
+    toWasmFlat('let x = 10; x := 9; x'),
+    [
+      [instr.i32.const, 10, instr.local.set, 0], // let x = 10;
+      [instr.i32.const, 9, instr.local.tee, 0, instr.drop], // x := 9;
+      [instr.local.get, 0], // x
+      instr.end,
+    ].flat(),
+  );
 })
 
 function toWasmFlat(input: string) {

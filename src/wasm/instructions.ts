@@ -28,6 +28,7 @@ export const instr = {
     // Like set but retain the value of the stack
     'tee': 0x22,
   },
+  drop: 0x1a,
 }
 
 export const valtype = {

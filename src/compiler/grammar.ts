@@ -15,20 +15,28 @@ export const grammarDef = `
     // Expression preceded by zero or more statements
     Main =Stmt* Expr
     Stmt = LetStmt
+         | ExprStmt
 
     // Examples for variable declaration:
     //+ "let x = 3 + 4;", "let distance = 100 + 2;"
     LetStmt = "let" identifier "=" Expr ";"
 
+    // An expression could also be a statement, yes
+    ExprStmt = Expr ";"
+
+    //+ "x := 3", "y := 2 + 1"
+    AssignmentExpr = identifier ":=" Expr
+
     // Accept optional expressions
-    Expr = PrimaryExpr (op PrimaryExpr)*
+    Expr = AssignmentExpr --assignment
+         | PrimaryExpr (op PrimaryExpr)* -- arithmetic
 
     // Low-level building block of expressions
     // and both branches have an arity of 1
     // and expression could be either a number or an identifier
     PrimaryExpr = "(" Expr ")" -- paren
                 | number
-                | identifier
+                | identifier -- var
 
     op = "+" | "-" | "*" | "/"
     // Digits can be repeated one or more times

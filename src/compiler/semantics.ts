@@ -1,7 +1,7 @@
 import { i32 } from "../wasm/encoding";
-import { instr } from "../wasm/instructions";
+import { instr, localidx } from "../wasm/instructions";
 import { Semantics } from "ohm-js";
-import { Symbol } from "./symbol";
+import { resolveSymbol, Symbol } from "./symbol";
 
 export function defineToWasm(semantics: Semantics, localVars: Map<string, Symbol>) {
   semantics.addOperation('toWasm', {
@@ -13,10 +13,23 @@ export function defineToWasm(semantics: Semantics, localVars: Map<string, Symbol
         instr.end,
       ];
     },
+    // NOTE: Ohm automatically generates this "pass-through" action,
+    // even though we do not explicitly specify it.
+    Stmt(child) {
+      return child.toWasm();
+    },
+    LetStmt(_let, ident, _eq, expr, _) {
+      const info = resolveSymbol(ident, localVars);
+      return [expr.toWasm(), instr.local.set, localidx(info.idx)];
+    },
+    // Output and remove value off the stack
+    ExprStmt(expr, _) {
+      return [expr.toWasm(), instr.drop];
+    },
     // Arity = 3? Two last parameters are iteration nodes
     // which are array-like objects that capture multiple matches.
     // NOTE: iterOps and iterOperands share the same number of children
-    Expr(num, iterOps, iterOperands) {
+    Expr_arithmetic(num, iterOps, iterOperands) {
       const result = [num.toWasm()];
       for (let i = 0; i < iterOps.numChildren; i++) {
         const op = iterOps.child(i);
@@ -25,8 +38,18 @@ export function defineToWasm(semantics: Semantics, localVars: Map<string, Symbol
       }
       return result;
     },
+    // Leave the value on the stack
+    AssignmentExpr(ident, _, expr) {
+      const info = resolveSymbol(ident, localVars);
+      return [expr.toWasm(), instr.local.tee, localidx(info.idx)];
+    },
+    // Case label for _paren alternative
     PrimaryExpr_paren(_lparen, expr, _rparen) {
       return expr.toWasm();
+    },
+    PrimaryExpr_var(ident) {
+      const info = resolveSymbol(ident, localVars);
+      return [instr.local.get, localidx(info.idx)];
     },
     op(char) {
       const op = char.sourceString;
