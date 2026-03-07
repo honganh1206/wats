@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
-import { typesec, typeidx, funcsec, functype, codesec, codes, func, exportsec, export_ } from "../../src/wasm/sections";
+import { typesec, typeidx, funcsec, functype, codesec, code, func, exportsec, export_ } from "../../src/wasm/sections";
 import { flatten } from "../../src/wasm/utils";
 import { instr } from "../../src/wasm/instructions";
 
@@ -37,14 +37,14 @@ test('func with no locals wraps body with empty vec', () => {
 
 test('codes prepends size to func', () => {
   const f = func([], [instr.end]);
-  const result = codes(f);
+  const result = code(f);
   // first element is u32(sizeInBytes)
   const sizeInBytes = flatten(f).length;
   assert.deepStrictEqual(result[0], [sizeInBytes]);
 });
 
 test('codesec wraps codes in a section', () => {
-  const result = codesec([codes(func([], [instr.end]))]);
+  const result = codesec([code(func([], [instr.end]))]);
   // section id 10
   assert.strictEqual(result[0], 10);
 });

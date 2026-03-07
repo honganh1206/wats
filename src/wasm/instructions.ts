@@ -1,5 +1,3 @@
-import { Byte, ByteArray, u32 } from "./encoding"
-
 // Map from instruction name to opcode
 export const instr = {
   end: 0x0b,
@@ -29,6 +27,7 @@ export const instr = {
     'tee': 0x22,
   },
   drop: 0x1a,
+  call: 0x10,
 }
 
 export const valtype = {
@@ -36,10 +35,4 @@ export const valtype = {
   i64: 0x7e,
   f32: 0x7d,
   f64: 0x7c,
-}
-
-export const localidx = (x: number) => u32(x);
-
-export function locals(n: number, type: Byte): ByteArray[] {
-  return [u32(n), type];
 }

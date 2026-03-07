@@ -1,17 +1,22 @@
 import { i32 } from "../wasm/encoding";
-import { instr, localidx } from "../wasm/instructions";
+import { instr } from "../wasm/instructions";
 import { Semantics } from "ohm-js";
-import { resolveSymbol, Symbol } from "./symbol";
+import { resolveSymbol, Scope, SymbolTable } from "./symbol";
+import { localidx } from "../wasm/sections";
 
-export function defineToWasm(semantics: Semantics, localVars: Map<string, Symbol>) {
+export function defineToWasm(semantics: Semantics, symbols: SymbolTable) {
+  // Stack of all symbol tables?
+  const scopes: Scope[] = [];
   semantics.addOperation('toWasm', {
-    // TODO: Update Main rule now with arity = 2
-    Main(stmtIter, expr) {
-      return [
-        stmtIter.children.map((c) => c.toWasm()),
-        expr.toWasm(),
-        instr.end,
-      ];
+    FunctionDecl(_func, ident, _lparen, optParams, _rparen, blockExpr) {
+      // Get the local scope of the function
+      scopes.push(symbols.get(ident.sourceString));
+      const result = [blockExpr.toWasm(), instr.end];
+      scopes.pop();
+      return result;
+    },
+    BlockExpr(_lbrace, iterStmt, expr, _rbrace) {
+      return [...iterStmt.children, expr].map((c) => c.toWasm());
     },
     // NOTE: Ohm automatically generates this "pass-through" action,
     // even though we do not explicitly specify it.
@@ -19,7 +24,8 @@ export function defineToWasm(semantics: Semantics, localVars: Map<string, Symbol
       return child.toWasm();
     },
     LetStmt(_let, ident, _eq, expr, _) {
-      const info = resolveSymbol(ident, localVars);
+      // Passing the innermost scope (What?)
+      const info = resolveSymbol(ident, scopes.at(-1));
       return [expr.toWasm(), instr.local.set, localidx(info.idx)];
     },
     // Output and remove value off the stack
@@ -40,7 +46,7 @@ export function defineToWasm(semantics: Semantics, localVars: Map<string, Symbol
     },
     // Leave the value on the stack
     AssignmentExpr(ident, _, expr) {
-      const info = resolveSymbol(ident, localVars);
+      const info = resolveSymbol(ident, scopes.at(-1));
       return [expr.toWasm(), instr.local.tee, localidx(info.idx)];
     },
     // Case label for _paren alternative
@@ -48,7 +54,7 @@ export function defineToWasm(semantics: Semantics, localVars: Map<string, Symbol
       return expr.toWasm();
     },
     PrimaryExpr_var(ident) {
-      const info = resolveSymbol(ident, localVars);
+      const info = resolveSymbol(ident, scopes.at(-1));
       return [instr.local.get, localidx(info.idx)];
     },
     op(char) {

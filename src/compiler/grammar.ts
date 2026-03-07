@@ -3,6 +3,21 @@ import { grammar } from "ohm-js";
 export const grammarDef = `
   // NOTE: Examples must be declared before declaring rule
   WatsLang {
+    Module = FunctionDecl*
+
+    Stmt = LetStmt
+         | ExprStmt
+
+    // Examples for variable declaration:
+    //+ "let x = 3 + 4;", "let distance = 100 + 2;"
+    LetStmt = "let" identifier "=" Expr ";"
+
+    //+ "funk zero() { 0 }", "funk add(x, y) { x + y }"
+    //- "funk x", "funk x();"
+    FunctionDecl = "funk" identifier "(" Params? ")" BlockExpr
+
+    Params = identifier ("," identifier)*
+
     //+ "42", "1", "66 + 99", "1 + 2 - 3", "1 + (2 * 3)", "(((1) / 2))"
     //+ "let x = 3; 42"
 
@@ -11,15 +26,7 @@ export const grammarDef = `
     // NOTE: Program must contain at least one expression (for now)
     //- "3abc"
     //- "let x = 3;"
-
-    // Expression preceded by zero or more statements
-    Main =Stmt* Expr
-    Stmt = LetStmt
-         | ExprStmt
-
-    // Examples for variable declaration:
-    //+ "let x = 3 + 4;", "let distance = 100 + 2;"
-    LetStmt = "let" identifier "=" Expr ";"
+    BlockExpr = "{" Stmt* Expr "}"
 
     // An expression could also be a statement, yes
     ExprStmt = Expr ";"
@@ -53,6 +60,10 @@ export const grammarDef = `
     // We do snake case here
     identStart = letter | "_"
     identPart = letter | "_" | digit
+
+    // Examples:
+    //+ "funk addOne(x) { x + one }", "funk one() { 1 } funk two() { 2 }"
+    //- "42", "let x", "funk x {}"
 }
 `;
 

@@ -31,7 +31,7 @@ export function codesec(codes: ByteArray[][]): ByteArray[] {
   return section(SECTION_ID_CODE, vec(codes));
 }
 
-export function codes(func: ByteArray[]): ByteArray[] {
+export function code(func: ByteArray[]): ByteArray[] {
   const sizeInBytes = flatten(func).length;
   return [u32(sizeInBytes), func];
 }
@@ -50,7 +50,7 @@ function section(id: Byte, contents: ByteArray[]): ByteArray[] {
 
 const SECTION_ID_EXPORT = 7;
 
-const funcidx = (x: number) => u32(x);
+export const funcidx = (x: number) => u32(x);
 
 export const exportdesc = {
   func(idx: number): ByteArray[] {
@@ -70,6 +70,10 @@ export function export_(nm: string, exportdesc: ByteArray[]): ByteArray[] {
   return [name(nm), exportdesc]
 }
 
+export const localidx = (x: number) => u32(x);
+export function locals(n: number, type: Byte): ByteArray[] {
+  return [u32(n), type];
+}
 // A name is encoded as a vector of bytes
 // containing UTF-8 character sequence
 function name(s: string): ByteArray {

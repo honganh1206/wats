@@ -1,12 +1,18 @@
 import { Grammar, MatchResult, Node } from "ohm-js";
 
-export type Symbol = {
+export type SymbolTable = Map<string, Scope>;
+
+export type Scope = Map<string, Symbol>;
+
+type Symbol = {
   name: string;
   idx: number;
-  what: 'local'; // Could be union type?
+  // TODO: Could be union type?
+  what: 'local';
 };
 
-export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Map<string, Map<string, Symbol>> {
+// Map function name to local symbol table
+export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): SymbolTable {
   // NOTE: We have a separate instance of semantics here
   // since ther might be a case where toWasm() gets invoked before buildSymbolTable()
   // which can lead to a runtime crash
@@ -14,7 +20,7 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Map
   // TODO: See if we can reuse the same semantics instance
   // and make sure the ordering go right instead.
   const tempSemantics = parser.createSemantics();
-  const symbols = new Map<string, Map<string, Symbol>>();
+  const symbols: SymbolTable = new Map<string, Scope>();
   symbols.set('main', new Map<string, Symbol>());
   tempSemantics.addOperation('buildSymbolTable', {
     // Single, generic action
@@ -34,10 +40,10 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Map
   return symbols;
 }
 
-export function resolveSymbol(identNode: Node, locals: Map<string, Symbol>): Symbol {
+export function resolveSymbol(identNode: Node, scope: Scope): Symbol {
   const identName = identNode.sourceString;
-  if (locals.has(identName)) {
-    return locals.get(identName);
+  if (scope.has(identName)) {
+    return scope.get(identName);
   }
   throw new Error(`Error: undeclared identifier '${identName}'`);
 }

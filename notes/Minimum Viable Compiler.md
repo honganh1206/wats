@@ -11,3 +11,4 @@ console.log(arr[0] + arr[1]); // Prints '12'
 
 Hexadecimal: A byte can be represented by two characters from 0 (`00`) to 255 (`ff`)
 
+`call` instruction takes one argument - an index for a function to call.

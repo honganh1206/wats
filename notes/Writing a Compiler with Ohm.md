@@ -43,3 +43,5 @@ We need to declare the type of the variable(s) and a way to map identifiers to v
 We use a symbol table to associate each variable reference to a declaration in a given scope.
 
 We can use `_default` in an operation (like default in switch statement) in case there is no matching action.
+
+Errors are detected in *compile time*, since all WASM instructions are typed, and thus the size of the stack can be statically determined.
