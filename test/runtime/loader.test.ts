@@ -36,3 +36,13 @@ test('buildModule', () => {
   assert.strictEqual(exports.main(), 43);
   assert.strictEqual(exports.backup(), 43);
 })
+
+test('module with multiple functions', () => {
+  assert.deepEqual(
+    loadMod(
+      compile('funk doIt() { add(1, 2) } funk add(x, y) { x + y }'),
+    ).doIt(),
+    3,
+  );
+})
+

@@ -14,9 +14,7 @@ export function buildModule(funcDecls: FunctionDeclaration[]): Uint8Array<ArrayB
   const types = funcDecls.map((f) =>
     functype(f.paramTypes, [f.resultType]),
   );
-  // Type declaration for each function
-  // assuming all functions share the same type signature
-  const funcs = funcDecls.map(() => typeidx(0));
+  const funcs = funcDecls.map((_, i) => typeidx(i));
   const codes = funcDecls.map((f) => code(func(f.locals, f.body)));
   const exports = funcDecls.map((f, i) =>
     export_(f.name, exportdesc.func(i)));

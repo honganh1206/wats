@@ -36,9 +36,15 @@ export const grammarDef = `
     // and expression could be either a number or an identifier
     PrimaryExpr = "(" Expr ")" -- paren
                 | number
+                | CallExpr
                 | identifier -- var
 
     op = "+" | "-" | "*" | "/"
+
+    CallExpr = identifier "(" Args? ")"
+
+    // Function args
+    Args = Expr ("," Expr)*
 
     // Digits can be repeated one or more times
     number = digit+

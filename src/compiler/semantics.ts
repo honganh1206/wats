@@ -2,10 +2,10 @@ import { i32 } from "../wasm/encoding";
 import { instr, valtype } from "../wasm/instructions";
 import { Semantics } from "ohm-js";
 import { resolveSymbol, Scope, Symbol } from "./symbol";
-import { localidx, locals } from "../wasm/sections";
+import { funcidx, localidx, locals } from "../wasm/sections";
 
 export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
-  const scopes: [Scope] = [{ locals: new Map<string, Symbol>(), children: new Map<string, Scope>() }];
+  const scopes: Scope[] = [symbolTable];
   semantics.addOperation('toWasm', {
     FunctionDecl(_func, ident, _lparen, optParams, _rparen, blockExpr) {
       // Get the local scope of the function
@@ -56,6 +56,21 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
       const info = resolveSymbol(ident, scopes.at(-1));
       return [instr.local.get, localidx(info.idx)];
     },
+    CallExpr(ident, _lparen, optArgs, _rparen) {
+      const name = ident.sourceString;
+      // Get all funk names from top-level symbol table
+      const funkNames = Array.from(scopes[0].children.keys());
+      // TODO: why -1 here? scopes inside scopes var are all empty
+      const idx = funkNames.indexOf(name);
+      return [
+        // Emit arg bytecodes first, then call instruction
+        optArgs.children.map((c) => c.toWasm()),
+        [instr.call, funcidx(idx)],
+      ];
+    },
+    Args(expr, _, iterExpr) {
+      return [expr, ...iterExpr.children].map((c) => c.toWasm());
+    },
     op(char) {
       const op = char.sourceString;
       const instructionByOp = {
@@ -76,7 +91,6 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
       return [instr.i32.const, ...i32(value)];
     },
   });
-
 }
 
 export function defineFunctionDecls(semantics: Semantics, symbolTable: Scope) {
@@ -85,13 +99,12 @@ export function defineFunctionDecls(semantics: Semantics, symbolTable: Scope) {
       return children.flatMap((c) => c.functionDecls());
     },
     FunctionDecl(_func, ident, _lparen, _params, _rparen, _blockExpr) {
-      // Extract param values and types
+      // Extract parameter values and types
       const name = ident.sourceString;
       const localVars = Array.from(symbolTable.children.get(name).locals.values());
       const params = localVars.filter((info) => info.what === 'param');
       const paramTypes = params.map((_) => valtype.i32);
       const varsCount = localVars.filter((info) => info.what === 'local').length;
-
       return [
         {
           name,
@@ -99,8 +112,8 @@ export function defineFunctionDecls(semantics: Semantics, symbolTable: Scope) {
           resultType: valtype.i32,
           locals: [locals(varsCount, valtype.i32)],
           body: this.toWasm(),
-        }
-      ]
-    }
-  })
+        },
+      ];
+    },
+  });
 }

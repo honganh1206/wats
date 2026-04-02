@@ -18,7 +18,6 @@ export function compile(src: string): Uint8Array<ArrayBuffer> {
   defineToWasm(semantics, st);
 
   defineFunctionDecls(semantics, st);
-
   // Visit all top-level func decls,
   // and return an object for each decl
   const funcDecls = semantics(matchResult).functionDecls();
