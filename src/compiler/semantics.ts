@@ -1,7 +1,7 @@
 import { i32 } from "../wasm/encoding";
 import { instr, valtype } from "../wasm/instructions";
 import { Semantics } from "ohm-js";
-import { resolveSymbol, Scope } from "./symbol";
+import { resolveSymbol, Scope, Symbol } from "./symbol";
 import { localidx, locals } from "../wasm/sections";
 
 export function defineToWasm(semantics: Semantics, symbolTable: Scope) {

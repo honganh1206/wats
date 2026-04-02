@@ -12,7 +12,8 @@ import { loadMod } from "./runtime/loader";
     if (line.trim() === ".exit") break;
     try {
       const mod = loadMod(compile(line));
-      const result = mod.main(0);
+      const main = mod.main as Function;
+      const result = main(0);
       console.log(result);
     } catch (e: any) {
       console.error(e.message);

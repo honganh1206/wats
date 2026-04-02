@@ -7,7 +7,7 @@ export type Scope = {
   children: Map<string, Scope>;
 };
 
-type Symbol = {
+export type Symbol = {
   name: string;
   idx: number;
   what: 'local' | 'param';
