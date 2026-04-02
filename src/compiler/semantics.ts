@@ -1,16 +1,15 @@
 import { i32 } from "../wasm/encoding";
-import { instr } from "../wasm/instructions";
+import { instr, valtype } from "../wasm/instructions";
 import { Semantics } from "ohm-js";
-import { resolveSymbol, Scope, SymbolTable } from "./symbol";
-import { localidx } from "../wasm/sections";
+import { resolveSymbol, Scope } from "./symbol";
+import { localidx, locals } from "../wasm/sections";
 
-export function defineToWasm(semantics: Semantics, symbols: SymbolTable) {
-  // Stack of all symbol tables?
-  const scopes: Scope[] = [];
+export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
+  const scopes: [Scope] = [{ locals: new Map<string, Symbol>(), children: new Map<string, Scope>() }];
   semantics.addOperation('toWasm', {
     FunctionDecl(_func, ident, _lparen, optParams, _rparen, blockExpr) {
       // Get the local scope of the function
-      scopes.push(symbols.get(ident.sourceString));
+      scopes.push(symbolTable.children.get(ident.sourceString));
       const result = [blockExpr.toWasm(), instr.end];
       scopes.pop();
       return result;
@@ -80,4 +79,28 @@ export function defineToWasm(semantics: Semantics, symbols: SymbolTable) {
 
 }
 
+export function defineFunctionDecls(semantics: Semantics, symbolTable: Scope) {
+  semantics.addOperation('functionDecls', {
+    _default(...children) {
+      return children.flatMap((c) => c.functionDecls());
+    },
+    FunctionDecl(_func, ident, _lparen, _params, _rparen, _blockExpr) {
+      // Extract param values and types
+      const name = ident.sourceString;
+      const localVars = Array.from(symbolTable.children.get(name).locals.values());
+      const params = localVars.filter((info) => info.what === 'param');
+      const paramTypes = params.map((_) => valtype.i32);
+      const varsCount = localVars.filter((info) => info.what === 'local').length;
 
+      return [
+        {
+          name,
+          paramTypes,
+          resultType: valtype.i32,
+          locals: [locals(varsCount, valtype.i32)],
+          body: this.toWasm(),
+        }
+      ]
+    }
+  })
+}

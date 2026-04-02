@@ -8,9 +8,9 @@ import { i32 } from "../../src/wasm/encoding";
 import { funcidx, locals } from "../../src/wasm/sections";
 
 test('compile bytes to WASM modules', () => {
-  assert.equal(loadMod(compile('let x = 42; x')).main(), 42);
+  assert.equal(loadMod(compile('funk main() { let x = 42; x }')).main(), 42);
   assert.deepEqual(
-    loadMod(compile('let a = 13; let b = 15; a := 10; a + b')).main(),
+    loadMod(compile('funk main() { let a = 13; let b = 15; a := 10; a + b }')).main(),
     25,
   );
 })

@@ -1,5 +1,4 @@
 import { Byte, ByteArray, i32 } from "./encoding";
-import { instr, locals, valtype } from "./instructions";
 import { code, codesec, export_, exportdesc, exportsec, func, funcsec, functype, typeidx, typesec } from "./sections";
 import { flatten, stringToBytes } from "./utils";
 

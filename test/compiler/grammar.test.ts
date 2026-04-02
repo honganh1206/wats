@@ -5,7 +5,7 @@ import { grammar } from "ohm-js";
 import { extractExamples } from "ohm-js/extras";
 import { grammarDef } from "../../src/compiler/grammar"
 
-test('WatsLang grammar test', () => {
+test('grammar test', () => {
   testExtractedExamples(grammarDef);
 })
 

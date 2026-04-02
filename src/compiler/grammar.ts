@@ -8,7 +8,6 @@ export const grammarDef = `
     Stmt = LetStmt
          | ExprStmt
 
-    // Examples for variable declaration:
     //+ "let x = 3 + 4;", "let distance = 100 + 2;"
     LetStmt = "let" identifier "=" Expr ";"
 
@@ -18,17 +17,11 @@ export const grammarDef = `
 
     Params = identifier ("," identifier)*
 
-    //+ "42", "1", "66 + 99", "1 + 2 - 3", "1 + (2 * 3)", "(((1) / 2))"
-    //+ "let x = 3; 42"
-
-    // NOTE: "abc" is a valid expression. 
-    // We have yet to enforce that only previously declared variables appear in an expression
-    // NOTE: Program must contain at least one expression (for now)
-    //- "3abc"
-    //- "let x = 3;"
+    //+ "{ let x = 3; 42 }"
+    //- "{ 3abc }"
+    //- "{ let x = 3 };"
     BlockExpr = "{" Stmt* Expr "}"
 
-    // An expression could also be a statement, yes
     ExprStmt = Expr ";"
 
     //+ "x := 3", "y := 2 + 1"
@@ -46,22 +39,20 @@ export const grammarDef = `
                 | identifier -- var
 
     op = "+" | "-" | "*" | "/"
+
     // Digits can be repeated one or more times
     number = digit+
 
-
-    // Examples with identifiers:
     //+ "x", "élan", "_", "_99"
     //- "1", "$nope"
 
     // Arity of 2 or more
     identifier = identStart identPart*
 
-    // We do snake case here
+    // snake_case naming convention
     identStart = letter | "_"
     identPart = letter | "_" | digit
 
-    // Examples:
     //+ "funk addOne(x) { x + one }", "funk one() { 1 } funk two() { 2 }"
     //- "42", "let x", "funk x {}"
 }
