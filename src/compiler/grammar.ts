@@ -9,11 +9,11 @@ export const grammarDef = `
          | ExprStmt
 
     //+ "let x = 3 + 4;", "let distance = 100 + 2;"
-    LetStmt = "let" identifier "=" Expr ";"
+    LetStmt = let identifier "=" Expr ";"
 
     //+ "funk zero() { 0 }", "funk add(x, y) { x + y }"
     //- "funk x", "funk x();"
-    FunctionDecl = "funk" identifier "(" Params? ")" BlockExpr
+    FunctionDecl = funk identifier "(" Params? ")" BlockExpr
 
     Params = identifier ("," identifier)*
 
@@ -28,6 +28,9 @@ export const grammarDef = `
     AssignmentExpr = identifier ":=" Expr
 
     // Accept optional expressions
+    ////+ "42", "add(1, 2)", "if x { 42 } else { 99 }", "iffy := 0"
+    //+ "42 + if x { 42 } else { 99 }", "1 + pow(r, 2)"
+    //- "1 - iffy := 0"
     Expr = AssignmentExpr --assignment
          | PrimaryExpr (op PrimaryExpr)* -- arithmetic
 
@@ -38,6 +41,7 @@ export const grammarDef = `
                 | number
                 | CallExpr
                 | identifier -- var
+                | IfExpr
 
     op = "+" | "-" | "*" | "/"
 
@@ -46,6 +50,17 @@ export const grammarDef = `
     // Function args
     Args = Expr ("," Expr)*
 
+    //+ "if x { 42 } else { 99 } if y { 99 } else { 0 }"
+    //- "if x { 42 }"
+    IfExpr = if Expr BlockExpr else (BlockExpr|IfExpr)
+
+    // Reserved keywords
+    keyword = if | else | funk | let
+    if = "if" ~identPart
+    else = "else" ~identPart
+    funk = "funk" ~identPart
+    let = "let" ~identPart
+
     // Digits can be repeated one or more times
     number = digit+
 
@@ -53,7 +68,7 @@ export const grammarDef = `
     //- "1", "$nope"
 
     // Arity of 2 or more
-    identifier = identStart identPart*
+    identifier = ~keyword identStart identPart*
 
     // snake_case naming convention
     identStart = letter | "_"

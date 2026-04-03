@@ -2,6 +2,9 @@
   "name": "wats",
   "version": "1.0.0",
   "main": "index.js",
+  "bin": {
+    "wats": "src/cli.ts"
+  },
   "scripts": {
     "check": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/**/*.test.ts",
