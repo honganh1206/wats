@@ -28,6 +28,9 @@ export const instr = {
   },
   drop: 0x1a,
   call: 0x10,
+  // Every if must be paired with an end
+  if: 0x04,
+  else: 0x05,
 }
 
 export const valtype = {
@@ -36,3 +39,5 @@ export const valtype = {
   f32: 0x7d,
   f64: 0x7c,
 }
+
+export const blocktype = {empty: 0x40, ...valtype}

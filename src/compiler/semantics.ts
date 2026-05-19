@@ -1,5 +1,5 @@
 import { i32 } from "../wasm/encoding";
-import { instr, valtype } from "../wasm/instructions";
+import { blocktype, instr, valtype } from "../wasm/instructions";
 import { Semantics } from "ohm-js";
 import { resolveSymbol, Scope, Symbol } from "./symbol";
 import { funcidx, localidx, locals } from "../wasm/sections";
@@ -70,6 +70,17 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
     },
     Args(expr, _, iterExpr) {
       return [expr, ...iterExpr.children].map((c) => c.toWasm());
+    },
+    IfExpr(_if, expr, thenBlock, _else, elseBlock) {
+      return [
+        expr.toWasm(),
+        // Support i32 only
+        [instr.if, blocktype.i32],
+        thenBlock.toWasm(),
+        instr.else,
+        elseBlock.toWasm(),
+        instr.end,
+      ];
     },
     op(char) {
       const op = char.sourceString;

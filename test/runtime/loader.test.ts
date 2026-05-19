@@ -39,6 +39,10 @@ test('buildModule', () => {
 
 test('module with multiple functions', () => {
   assert.deepEqual(
+    loadMod(compile('funk main() { let x = 42; x }')).main(),
+    42,
+  );
+  assert.deepEqual(
     loadMod(
       compile('funk doIt() { add(1, 2) } funk add(x, y) { x + y }'),
     ).doIt(),
@@ -46,3 +50,20 @@ test('module with multiple functions', () => {
   );
 })
 
+
+test('Wats if expressions', () => {
+  let mod = loadMod(compile('funk choose(x) { if x { 42 } else { 43 } }'));
+  assert.strictEqual(mod.choose(1), 42);
+  assert.strictEqual(mod.choose(0), 43);
+
+  mod = loadMod(
+    compile(`
+      funk isZero(x) {
+        let result = if x { 0 } else { 1 };
+        result
+      }
+    `)
+  )
+  assert.strictEqual(mod.isZero(1), 0);
+  assert.strictEqual(mod.isZero(0), 1);
+})

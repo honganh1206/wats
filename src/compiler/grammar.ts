@@ -28,7 +28,7 @@ export const grammarDef = `
     AssignmentExpr = identifier ":=" Expr
 
     // Accept optional expressions
-    ////+ "42", "add(1, 2)", "if x { 42 } else { 99 }", "iffy := 0"
+    //+ "42", "add(1, 2)", "if x { 42 } else { 99 }", "iffy := 0"
     //+ "42 + if x { 42 } else { 99 }", "1 + pow(r, 2)"
     //- "1 - iffy := 0"
     Expr = AssignmentExpr --assignment
@@ -50,7 +50,7 @@ export const grammarDef = `
     // Function args
     Args = Expr ("," Expr)*
 
-    //+ "if x { 42 } else { 99 } if y { 99 } else { 0 }"
+    //+ "if x { 42 } else { 99 }", "if x { 42 } else if y { 99 } else { 0 }"
     //- "if x { 42 }"
     IfExpr = if Expr BlockExpr else (BlockExpr|IfExpr)
 
