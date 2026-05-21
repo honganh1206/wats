@@ -145,3 +145,8 @@ vite.config.ts.timestamp-*
 
 *.wasm
 bin/
+
+# Playground build artifacts
+playground/.svelte-kit/
+playground/build/
+playground/node_modules/
