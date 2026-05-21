@@ -13,8 +13,8 @@
     "check": "tsc --noEmit",
     "test": "node --experimental-strip-types --test test/**/*.test.ts",
     "repl": "node --experimental-strip-types src/repl.ts",
-    "playground:dev": "bun run --cwd playground dev",
-    "playground:build": "bun run --cwd playground build"
+    "playground:dev": "bun run --filter wats-playground dev",
+    "playground:build": "bun run --filter wats-playground build"
   },
   "keywords": [],
   "author": "",
