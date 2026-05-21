@@ -34,7 +34,7 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
     // Arity = 3? Two last parameters are iteration nodes
     // which are array-like objects that capture multiple matches.
     // NOTE: iterOps and iterOperands share the same number of children
-    Expr_arithmetic(num, iterOps, iterOperands) {
+    Expr_binary(num, iterOps, iterOperands) {
       const result = [num.toWasm()];
       for (let i = 0; i < iterOps.numChildren; i++) {
         const op = iterOps.child(i);
@@ -82,13 +82,21 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
         instr.end,
       ];
     },
-    op(char) {
+    binaryOp(char) {
       const op = char.sourceString;
       const instructionByOp = {
         '+': instr.i32.add,
         '-': instr.i32.sub,
         '*': instr.i32.mul,
         '/': instr.i32.div_s,
+        '==': instr.i32.eq,
+        '!=': instr.i32.ne,
+        '<': instr.i32.lt_s,
+        '<=': instr.i32.le_s,
+        '>': instr.i32.gt_s,
+        '>=': instr.i32.ge_s,
+        '&': instr.i32.and,
+        '|': instr.i32.or,
       };
       if (!Object.hasOwn(instructionByOp, op)) {
         throw new Error(`Unhandled operator '${op}'`);

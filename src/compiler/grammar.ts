@@ -32,7 +32,7 @@ export const grammarDef = `
     //+ "42 + if x { 42 } else { 99 }", "1 + pow(r, 2)"
     //- "1 - iffy := 0"
     Expr = AssignmentExpr --assignment
-         | PrimaryExpr (op PrimaryExpr)* -- arithmetic
+         | PrimaryExpr (binaryOp PrimaryExpr)* -- binary
 
     // Low-level building block of expressions
     // and both branches have an arity of 1
@@ -62,6 +62,9 @@ export const grammarDef = `
     let = "let" ~identPart
 
     // Digits can be repeated one or more times
+    binaryOp = "+" | "-" | "*" | "/" | compareOp | logicalOp
+    compareOp = "==" | "!=" | "<=" | "<" | ">=" | ">"
+    logicalOp = "&" | "|"
     number = digit+
 
     //+ "x", "élan", "_", "_99"
@@ -76,6 +79,7 @@ export const grammarDef = `
 
     //+ "funk addOne(x) { x + one }", "funk one() { 1 } funk two() { 2 }"
     //- "42", "let x", "funk x {}"
+
 }
 `;
 

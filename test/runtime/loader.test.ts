@@ -67,3 +67,27 @@ test('Wats if expressions', () => {
   assert.strictEqual(mod.isZero(1), 0);
   assert.strictEqual(mod.isZero(0), 1);
 })
+
+test('Wats comparison operators', () => {
+  const mod = loadMod(
+    compile(`
+      funk greaterThan(a, b) { a > b }
+      funk lessThan(a, b) { a < b }
+      funk greaterThanOrEq(a, b) { a >= b }
+      funk lessThanOrEq(a, b) { a <= b }
+      funk eq(a, b) { a == b }
+      funk and_(a, b) { a & b }
+      funk or_(a, b) { a | b }
+`),
+  );
+  assert.strictEqual(mod.greaterThan(43, 42), 1);
+  assert.strictEqual(mod.greaterThan(42, 43), 0);
+  assert.strictEqual(mod.lessThan(43, 42), 0);
+  assert.strictEqual(mod.greaterThanOrEq(42, 42), 1);
+  assert.strictEqual(mod.lessThanOrEq(42, 43), 1);
+  assert.strictEqual(mod.eq(42, 42), 1);
+  assert.strictEqual(mod.and_(1, 1), 1);
+  assert.strictEqual(mod.and_(1, 0), 0);
+  assert.strictEqual(mod.or_(1, 0), 1);
+  assert.strictEqual(mod.or_(0, 1), 1);
+})

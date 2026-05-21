@@ -1,5 +1,3 @@
-import assert from "node:assert";
-
 // NOTE: We use number instead of UInt8Array for flexibility?
 export type Byte = number;
 
@@ -12,7 +10,9 @@ const MIN_U32 = 0;
 const MAX_U32 = 2 ** 32 - 1;
 
 export function u32(v: number): ByteArray[] {
-  assert(v >= 0, `Value is negative: ${v}`);
+  if (v < 0) {
+    throw Error(`Value is negative: ${v}`);
+  }
   if (v < MIN_U32 || v > MAX_U32) {
     throw Error(`Value out of range for u32: ${v}`);
   }

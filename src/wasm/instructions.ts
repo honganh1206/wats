@@ -6,8 +6,22 @@ export const instr = {
     'add': 0x6a,
     'sub': 0x6b,
     'mul': 0x6c,
-    // Signed integers
     'div_s': 0x6d,
+    'eqz': 0x45, // a == 0
+    'eq': 0x46,
+    'ne': 0x47,
+    // _s for signed and _u for unsigned
+    'lt_s': 0x48,
+    'lt_u': 0x49,
+    'gt_s': 0x4a,
+    'gt_u': 0x4b,
+    'le_s': 0x4c,
+    'le_u': 0x4d,
+    'ge_s': 0x4e,
+    'ge_u': 0x4f,
+    // Logical (bitwise) operators
+    'and': 0x71,
+    'or': 0x72,
   },
   i64: {
     'const': 0x42,
@@ -40,4 +54,4 @@ export const valtype = {
   f64: 0x7c,
 }
 
-export const blocktype = {empty: 0x40, ...valtype}
+export const blocktype = { empty: 0x40, ...valtype }
