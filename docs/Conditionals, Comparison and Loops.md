@@ -12,3 +12,14 @@ WebAssembly's comparison instructions are typed. They each consume TWO operands 
 
 WebAssembly’s `and` and `or` instructions are *bitwise operators* that can be applied to i32 or
 i64 operands
+
+A loop must always be paired with an end instruction. A loop can produce a value, as specified by its result type.
+
+```webassembly
+(block        ;; label depth 1
+  (loop       ;; label depth 0
+    br 0
+  )
+)
+;; jump back to loop
+```

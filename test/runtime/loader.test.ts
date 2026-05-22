@@ -91,3 +91,19 @@ test('Wats comparison operators', () => {
   assert.strictEqual(mod.or_(1, 0), 1);
   assert.strictEqual(mod.or_(0, 1), 1);
 })
+
+test('Wats while loops', () => {
+  const mod = loadMod(
+    compile(`
+      funk countTo(n) {
+        let x = 0;
+        while x < n {
+          x := x + 1;
+        }
+        x
+      }
+    `)
+  )
+
+  assert.strictEqual(mod.countTo(10), 10);
+})

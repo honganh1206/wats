@@ -1,5 +1,5 @@
 import { i32 } from "../wasm/encoding";
-import { blocktype, instr, valtype } from "../wasm/instructions";
+import { blocktype, instr, labelidx, valtype } from "../wasm/instructions";
 import { Semantics } from "ohm-js";
 import { resolveSymbol, Scope, Symbol } from "./symbol";
 import { funcidx, localidx, locals } from "../wasm/sections";
@@ -17,6 +17,9 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
     BlockExpr(_lbrace, iterStmt, expr, _rbrace) {
       return [...iterStmt.children, expr].map((c) => c.toWasm());
     },
+    BlockStmts(_lbrace, iterStmt, _rbrace) {
+      return iterStmt.children.map((c) => c.toWasm())
+    },
     // NOTE: Ohm automatically generates this "pass-through" action,
     // even though we do not explicitly specify it.
     Stmt(child) {
@@ -30,6 +33,17 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
     // Output and remove value off the stack
     ExprStmt(expr, _) {
       return [expr.toWasm(), instr.drop];
+    },
+    WhileStmt(_while, cond, body) {
+      return [
+        [instr.loop, blocktype.empty],
+        cond.toWasm(),
+        [instr.if, blocktype.empty],
+        body.toWasm(),
+        [instr.br, labelidx(1)], // Back to top of loop
+        instr.end, // End if
+        instr.end, // End loop
+      ];
     },
     // Arity = 3? Two last parameters are iteration nodes
     // which are array-like objects that capture multiple matches.

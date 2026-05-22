@@ -1,3 +1,5 @@
+import { u32 } from "./encoding";
+
 // Map from instruction name to opcode
 export const instr = {
   end: 0x0b,
@@ -45,6 +47,11 @@ export const instr = {
   // Every if must be paired with an end
   if: 0x04,
   else: 0x05,
+  block: 0x02,
+  loop: 0x03,
+  br: 0x0c,
+  // Break out of loop
+  br_if: 0x0d,
 }
 
 export const valtype = {
@@ -55,3 +62,6 @@ export const valtype = {
 }
 
 export const blocktype = { empty: 0x40, ...valtype }
+
+export const labelidx = u32;
+

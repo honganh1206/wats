@@ -7,9 +7,14 @@ export const grammarDef = `
 
     Stmt = LetStmt
          | ExprStmt
+         | WhileStmt
 
     //+ "let x = 3 + 4;", "let distance = 100 + 2;"
     LetStmt = let identifier "=" Expr ";"
+
+    //+ "while 0 {}", "while x < 10 { x := x + 1; }"
+    //- "while 1 { 42 }", "while x < 10 { x := x + 1 }"
+    WhileStmt = while Expr BlockStmts
 
     //+ "funk zero() { 0 }", "funk add(x, y) { x + y }"
     //- "funk x", "funk x();"
@@ -21,6 +26,10 @@ export const grammarDef = `
     //- "{ 3abc }"
     //- "{ let x = 3 };"
     BlockExpr = "{" Stmt* Expr "}"
+
+    //+ "{}","{ let x = 3; }", "{ 42; 99; }"
+    //- "{ 42 }", "{ x := 1 }"
+    BlockStmts = "{" Stmt* "}"
 
     ExprStmt = Expr ";"
 
@@ -55,11 +64,12 @@ export const grammarDef = `
     IfExpr = if Expr BlockExpr else (BlockExpr|IfExpr)
 
     // Reserved keywords
-    keyword = if | else | funk | let
+    keyword = if | else | funk | let | while
     if = "if" ~identPart
     else = "else" ~identPart
     funk = "funk" ~identPart
     let = "let" ~identPart
+    while = "while" ~identPart
 
     // Digits can be repeated one or more times
     binaryOp = "+" | "-" | "*" | "/" | compareOp | logicalOp
