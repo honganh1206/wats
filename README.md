@@ -20,9 +20,6 @@ Supports arithmetic (`+`, `-`, `*`, `/`), `let` bindings, variable assignment (`
 ## Usage
 
 ```sh
-# Run the REPL
-npm run repl
-
 # Run tests
 bun test
 

@@ -3,7 +3,6 @@ import { blocktype, instr, labelidx, valtype } from "../wasm/instructions";
 import { Node, Semantics } from "ohm-js";
 import { resolveSymbol, Scope, Symbol } from "./symbol";
 import { funcidx, localidx, locals } from "../wasm/sections";
-import assert from "node:assert";
 
 export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
   const scopes: Scope[] = [symbolTable];
@@ -189,9 +188,13 @@ export function defineImportDecls(semantics: Semantics) {
 function getParamTypes(node: Node) {
   // A Params node of a imported functions should always have three child nodes:
   // First is the identifier, second is the commas between params, and third is identifiers after the 1st one
-  assert.strictEqual(node.ctorName, 'Params', 'Wrong node type');
-  assert.strictEqual(node.numChildren, 3, 'Wrong number of children');
-  const [first, _, iterRest] = node.children;
+  if (node.ctorName !== 'Params') {
+    throw new Error('Wrong node type');
+  }
+  if (node.numChildren !== 3) {
+    throw new Error('Wrong number of children');
+  }
+  const [_, __, iterRest] = node.children;
   // Tell the compiler the Wasm type of the params (i32, the language currently supports i32 only) 
   return new Array(iterRest.numChildren + 1).fill(valtype.i32);
 }

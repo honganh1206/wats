@@ -3,7 +3,24 @@
   import { runWats, type RunResult } from "$lib/wats";
 
   const STORAGE_KEY = "wats-playground-src";
-  const SEED = `funk main() { add(1, 2) }\nfunk add(x, y) { x + y }\n`;
+  const SEED = `funk main() {
+  print(add(41, one()))
+}
+`;
+  const BUILT_INS = [
+    {
+      call: "add(a, b)",
+      result: "returns a + b",
+    },
+    {
+      call: "one()",
+      result: "returns 1",
+    },
+    {
+      call: "print(x)",
+      result: "prints x and returns x",
+    },
+  ];
 
   let src = $state(SEED);
   let result = $state<RunResult | null>(null);
@@ -59,13 +76,25 @@
     rows="20"
   ></textarea>
 
+  <section class="builtins" aria-labelledby="builtins-title">
+    <h2 id="builtins-title">Built-in Functions</h2>
+    <div class="builtins-grid">
+      {#each BUILT_INS as item}
+        <div class="builtin-row">
+          <span>{item.call}</span>
+          <span>{item.result}</span>
+        </div>
+      {/each}
+    </div>
+  </section>
+
   <section class="output" aria-live="polite">
     <h2>Output</h2>
     {#if result === null}
       <pre class="muted">Press <kbd>Run</kbd> or <kbd>Ctrl/Cmd+Enter</kbd
         >.</pre>
     {:else if result.ok}
-      <pre class="ok">{String(result.result)}</pre>
+      <pre class="ok">{result.logs.length > 0 ? result.logs.join("\n") : String(result.result)}</pre>
     {:else}
       <pre class="err">{result.stage} error: {result.error}</pre>
     {/if}
@@ -144,8 +173,34 @@
     outline-offset: -1px;
   }
 
+  .builtins,
   .output {
     margin-top: 1.5rem;
+  }
+
+  .builtins-grid {
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+    overflow: hidden;
+  }
+
+  .builtin-row {
+    display: grid;
+    grid-template-columns: minmax(7rem, 0.7fr) minmax(9rem, 1fr);
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.65rem 0.75rem;
+    border-top: 1px solid #e6e6e6;
+    font-size: 14px;
+  }
+
+  .builtin-row:first-child {
+    border-top: 0;
+  }
+
+  .builtin-row span {
+    color: #555;
   }
 
   h2 {
@@ -196,5 +251,12 @@
 
   footer a {
     color: inherit;
+  }
+
+  @media (max-width: 720px) {
+    .builtin-row {
+      grid-template-columns: 1fr;
+      gap: 0.3rem;
+    }
   }
 </style>
