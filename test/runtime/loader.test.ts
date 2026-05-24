@@ -15,26 +15,40 @@ test('compile bytes to WASM modules', () => {
   );
 })
 
-test('buildModule', () => {
+test('buildModule with imports', () => {
+  const importDecls = [
+    {
+      module: 'basicMath',
+      name: 'addOne',
+      paramTypes: [valtype.i32],
+      resultType: valtype.i32,
+      locals: [],
+      body: [],
+    },
+  ];
   const functionDecls = [
     {
+      module: 'main',
       name: 'main',
       paramTypes: [],
       resultType: valtype.i32,
       locals: [locals(1, valtype.i32)],
-      body: [instr.call, funcidx(1), instr.end],
+      body: [instr.call, funcidx(2), instr.end],
     },
     {
+      module: 'main',
       name: 'backup',
       paramTypes: [],
       resultType: valtype.i32,
       locals: [],
-      body: [instr.i32.const, i32(43), instr.end],
+      body: [instr.i32.const, i32(42), instr.call, funcidx(0), instr.end],
     },
   ];
-  const exports = loadMod(buildModule(functionDecls));
+  const imports = {
+    basicMath: { addOne: (x: number) => x + 1 }
+  };
+  const exports = loadMod(buildModule(importDecls, functionDecls), imports);
   assert.strictEqual(exports.main(), 43);
-  assert.strictEqual(exports.backup(), 43);
 })
 
 test('module with multiple functions', () => {
@@ -50,6 +64,38 @@ test('module with multiple functions', () => {
   );
 })
 
+
+test('module with imports', () => {
+  const imports = {
+    watsImports: {
+      add: (a: number, b: number) => a + b,
+      one: () => 1,
+    },
+  };
+  const compileAndEval = (src: string) => {
+    return loadMod(compile(src), imports).main();
+  }
+
+  // Code without import still works
+  assert.strictEqual(compileAndEval(`funk main() { 2 + 2 }`), 4);
+
+  assert.strictEqual(compileAndEval(
+    `extern funk add(a, b);
+     funk main() {
+      let a = 42;
+      add(a, 1)
+     }`
+  ), 43);
+
+  assert.strictEqual(compileAndEval(
+    `extern funk add(a, b);
+      extern funk one();
+      funk main() {
+        let a = 42;
+        add(a, one())
+      }`
+  ), 43);
+});
 
 test('Wats if expressions', () => {
   let mod = loadMod(compile('funk choose(x) { if x { 42 } else { 43 } }'));
@@ -107,3 +153,26 @@ test('Wats while loops', () => {
 
   assert.strictEqual(mod.countTo(10), 10);
 })
+
+test('Wats conditionals, comparisons, and loops', () => {
+  const mod = loadMod(
+    compile(`
+      funk countTo(n) {
+        let x = 0;
+        while x < n {
+          if x < 60 { x := x + 1; }
+        }
+        x
+      }
+
+      funk compare(a, b) {
+        if a < b { 0 - 1 } else if a > b { 1 } else { 0 }
+      }
+`),
+  );
+  assert.strictEqual(mod.countTo(10), 10);
+  assert.strictEqual(mod.countTo(-1), 0);
+  assert.strictEqual(mod.compare(1, 2), -1);
+  assert.strictEqual(mod.compare(42, 2), 1);
+  assert.strictEqual(mod.compare(42, 42), 0);
+});

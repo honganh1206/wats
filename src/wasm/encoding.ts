@@ -1,9 +1,8 @@
-// NOTE: We use number instead of UInt8Array for flexibility?
+// A single byte in the final Wasm module.
 export type Byte = number;
 
-// Nested recursive array structure that references itself
-// meaning every function returns either raw bytes 
-// or arbitrarily nested arrays of bytes
+// Byte constructors return nested arrays so callers can compose Wasm
+// structures first and flatten them only when the final module is emitted.
 export type ByteArray = Byte | ByteArray[];
 
 const MIN_U32 = 0;
@@ -23,9 +22,8 @@ export function u32(v: number): ByteArray[] {
 const MIN_I32 = -(2 ** 32 / 2);
 
 const MAX_I32 = 2 ** 32 / 2 - 1;
-// Input might be an unsigned representation of a negative number e.g., 0xFFFFFFFF = 4294967295 for -1
-
-// so we need to convert back to the actual negative number
+// Accept two's-complement unsigned representations of negative i32 values,
+// e.g. 0xFFFFFFFF (4294967295) encodes as -1.
 const I32_NEG_OFFSET = 2 ** 32;
 
 export function i32(v: number): ByteArray[] {
@@ -74,16 +72,16 @@ export function vec(elements: ByteArray[]): ByteArray[] {
 const SEVEN_BIT_MASK_BIG_INT = 0b01111111n;
 const CONTINUATION_BIT = 0b10000000;
 
-// Encode all numbers that fit into 7 bits from 0 to 127
+// Unsigned LEB128 encodes a value 7 bits at a time. 
+// The high bit of each byte indicates whether another byte follows.
 export function leb128(v: number | bigint): ByteArray[] {
   let val = typeof v === "number" ? BigInt(v) : v;
   let more = true;
   const r: ByteArray = [];
 
   while (more) {
-    // Extract the lowest 7 bits of val
-    // and pack them into each output byte.
-    // The 8th bit is reserved for the continuation bit
+    // Pack the lowest 7 bits into the output byte; the 8th bit is reserved
+    // for the continuation marker.
     const b = Number(val & SEVEN_BIT_MASK_BIG_INT);
     // Shift to the next 7 bits to process
     val = val >> 7n;
@@ -107,14 +105,13 @@ export function sleb128(v: number | bigint): ByteArray[] {
 
   while (more) {
     const b = Number(val & SEVEN_BIT_MASK_BIG_INT);
-    // Isolate bit 6 and check if either 1 or 0
+    // Bit 6 is the sign bit of the current 7-bit payload.
     const signBitSet = !!(b & 0x40);
 
     val = val >> 7n;
 
-    // Check for both unsigned (val is 0 and sign bit 6 clear) and signed (val is -1 and sign bit 6 set)
+    // Stop when the remaining bits are only sign extension.
     if ((val === 0n && !signBitSet) || (val === -1n && signBitSet)) {
-      // No bit left to process or highest negative value?
       more = false;
       r.push(b);
     } else {

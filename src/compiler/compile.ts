@@ -1,6 +1,6 @@
 import { parser } from "./grammar";
 import { buildSymbolTable } from "./symbol";
-import { defineFunctionDecls, defineToWasm } from "./semantics";
+import { defineFunctionDecls, defineImportDecls, defineToWasm } from "./semantics";
 import { buildModule } from "../wasm/module";
 
 export function compile(src: string): Uint8Array<ArrayBuffer> {
@@ -16,11 +16,13 @@ export function compile(src: string): Uint8Array<ArrayBuffer> {
   // Top-level symbol table with a single key 'Main'
   const st = buildSymbolTable(parser, matchResult);
   defineToWasm(semantics, st);
-
+  defineImportDecls(semantics);
   defineFunctionDecls(semantics, st);
+
+  const importDecls = semantics(matchResult).importDecls();
   // Visit all top-level func decls,
   // and return an object for each decl
   const funcDecls = semantics(matchResult).functionDecls();
-  return buildModule(funcDecls)
+  return buildModule(importDecls, funcDecls)
 }
 

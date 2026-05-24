@@ -1,8 +1,9 @@
 import { i32 } from "../wasm/encoding";
 import { blocktype, instr, labelidx, valtype } from "../wasm/instructions";
-import { Semantics } from "ohm-js";
+import { Node, Semantics } from "ohm-js";
 import { resolveSymbol, Scope, Symbol } from "./symbol";
 import { funcidx, localidx, locals } from "../wasm/sections";
+import assert from "node:assert";
 
 export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
   const scopes: Scope[] = [symbolTable];
@@ -74,7 +75,6 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
       const name = ident.sourceString;
       // Get all funk names from top-level symbol table
       const funkNames = Array.from(scopes[0].children.keys());
-      // TODO: why -1 here? scopes inside scopes var are all empty
       const idx = funkNames.indexOf(name);
       return [
         // Emit arg bytecodes first, then call instruction
@@ -88,11 +88,23 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
     IfExpr(_if, expr, thenBlock, _else, elseBlock) {
       return [
         expr.toWasm(),
-        // Support i32 only
         [instr.if, blocktype.i32],
         thenBlock.toWasm(),
         instr.else,
         elseBlock.toWasm(),
+        instr.end,
+      ];
+    },
+    IfStmt(_if, expr, thenBlock, _else, iterElseBlock) {
+      const elseFrag =
+        iterElseBlock.child(0) ?
+          [instr.else, iterElseBlock.child(0).toWasm()]
+          : [];
+      return [
+        expr.toWasm(),
+        [instr.if, blocktype.empty],
+        thenBlock.toWasm(),
+        elseFrag,
         instr.end,
       ];
     },
@@ -149,4 +161,37 @@ export function defineFunctionDecls(semantics: Semantics, symbolTable: Scope) {
       ];
     },
   });
+}
+
+export function defineImportDecls(semantics: Semantics) {
+  semantics.addOperation('importDecls', {
+    _default(...children) {
+      return children.flatMap((c) => c.importDecls());
+    },
+    ExternFunctionDecl(_extern, _func, ident, _l, optParams, _r, _) {
+      const name = ident.sourceString;
+      const paramTypes =
+        optParams.numChildren === 0 ?
+          []
+          : getParamTypes(optParams.child(0));
+      return [
+        {
+          module: 'watsImports',
+          name,
+          paramTypes,
+          resultType: valtype.i32,
+        }
+      ]
+    },
+  });
+}
+
+function getParamTypes(node: Node) {
+  // A Params node of a imported functions should always have three child nodes:
+  // First is the identifier, second is the commas between params, and third is identifiers after the 1st one
+  assert.strictEqual(node.ctorName, 'Params', 'Wrong node type');
+  assert.strictEqual(node.numChildren, 3, 'Wrong number of children');
+  const [first, _, iterRest] = node.children;
+  // Tell the compiler the Wasm type of the params (i32, the language currently supports i32 only) 
+  return new Array(iterRest.numChildren + 1).fill(valtype.i32);
 }

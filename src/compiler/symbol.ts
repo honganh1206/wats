@@ -34,6 +34,15 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Sco
       const info: Symbol = { name, idx, what: 'local' };
       scopes.at(-1).locals.set(name, info);
     },
+    ExternFunctionDecl(_extern, _func, ident, _l, optParams, _r, _) {
+      const name = ident.sourceString;
+      const childScope: Scope = {
+        locals: new Map<string, Symbol>(),
+        children: new Map<string, Scope>(),
+      };
+      // Init top-level symbol table
+      scopes.at(-1).children.set(name, childScope);
+    },
     FunctionDecl(_func, ident, _lparen, optParams, _rparen, blockExpr) {
       const name = ident.sourceString;
       const childScope: Scope = {

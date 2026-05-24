@@ -1,8 +1,9 @@
-import { Byte, ByteArray, i32 } from "./encoding";
-import { code, codesec, export_, exportdesc, exportsec, func, funcsec, functype, typeidx, typesec } from "./sections";
+import { Byte, ByteArray } from "./encoding";
+import { code, codesec, export_, exportdesc, exportsec, func, funcsec, functype, import_, importdesc, importsec, typeidx, typesec } from "./sections";
 import { flatten, stringToBytes } from "./utils";
 
 type FunctionDeclaration = {
+  module: string,
   name: string,
   paramTypes: Byte[],
   resultType: number,
@@ -10,19 +11,24 @@ type FunctionDeclaration = {
   body: (number | ByteArray[])[]
 }
 
-export function buildModule(funcDecls: FunctionDeclaration[]): Uint8Array<ArrayBuffer> {
-  const types = funcDecls.map((f) =>
+export function buildModule(importDecls: FunctionDeclaration[], funcDecls: FunctionDeclaration[]): Uint8Array<ArrayBuffer> {
+  const types = [...importDecls, ...funcDecls].map((f) =>
     functype(f.paramTypes, [f.resultType]),
   );
+  // Map functions with indexes of different sections
   const funcs = funcDecls.map((_, i) => typeidx(i));
   const codes = funcDecls.map((f) => code(func(f.locals, f.body)));
+  const imports = importDecls.map((f, i) =>
+    import_(f.module, f.name, importdesc.func(i)));
   const exports = funcDecls.map((f, i) =>
-    export_(f.name, exportdesc.func(i)));
+    // Make space for imported functions with very first indexes
+    export_(f.name, exportdesc.func(i + importDecls.length)));
 
   const mod = module([
     // Type section with one entry of a function
     // with no arguments and return value
     typesec(types),
+    importsec(imports),
     funcsec(funcs),
     // Export the function at index 0 under the name 'main'
     exportsec(exports),

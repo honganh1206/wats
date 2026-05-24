@@ -3,9 +3,10 @@ import { grammar } from "ohm-js";
 export const grammarDef = `
   // NOTE: Examples must be declared before declaring rule
   WatsLang {
-    Module = FunctionDecl*
+    Module = (FunctionDecl|ExternFunctionDecl)*
 
     Stmt = LetStmt
+         | IfStmt 
          | ExprStmt
          | WhileStmt
 
@@ -20,6 +21,9 @@ export const grammarDef = `
     //- "funk x", "funk x();"
     FunctionDecl = funk identifier "(" Params? ")" BlockExpr
 
+    //+ "extern funk print(x);"
+    ExternFunctionDecl = extern funk identifier "(" Params? ")" ";"
+
     Params = identifier ("," identifier)*
 
     //+ "{ let x = 3; 42 }"
@@ -32,6 +36,11 @@ export const grammarDef = `
     BlockStmts = "{" Stmt* "}"
 
     ExprStmt = Expr ";"
+
+    // Else portion is optional
+    //+ "if x < 10 {}", "if z { 42; }", "if x {} else if y {} else { 42; }"
+    //- "if x < 10 { 3 } else {}"
+    IfStmt = if Expr BlockStmts (else (BlockStmts|IfStmt))?
 
     //+ "x := 3", "y := 2 + 1"
     AssignmentExpr = identifier ":=" Expr
@@ -64,12 +73,13 @@ export const grammarDef = `
     IfExpr = if Expr BlockExpr else (BlockExpr|IfExpr)
 
     // Reserved keywords
-    keyword = if | else | funk | let | while
+    keyword = if | else | funk | let | while | extern
     if = "if" ~identPart
     else = "else" ~identPart
     funk = "funk" ~identPart
     let = "let" ~identPart
     while = "while" ~identPart
+    extern = "extern" ~identPart
 
     // Digits can be repeated one or more times
     binaryOp = "+" | "-" | "*" | "/" | compareOp | logicalOp
@@ -86,6 +96,12 @@ export const grammarDef = `
     // snake_case naming convention
     identStart = letter | "_"
     identPart = letter | "_" | digit
+
+    // Comments in Wats. 
+    // Use space rule to treat anything after // as white space
+    space += singleLineComment | multiLineComment
+    singleLineComment = "//" (~"\\n" any)*
+    multiLineComment = "/*" (~"*/" any)* "*/"
 
     //+ "funk addOne(x) { x + one }", "funk one() { 1 } funk two() { 2 }"
     //- "42", "let x", "funk x {}"

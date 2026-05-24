@@ -70,6 +70,27 @@ export function export_(nm: string, exportdesc: ByteArray[]): ByteArray[] {
   return [name(nm), exportdesc]
 }
 
+// mod: name, nm: name, d:importdesc
+export function import_(mod: string, nm: string, importdesc: ByteArray[]): ByteArray[] {
+  return [name(mod), name(nm), importdesc];
+}
+
+const SECTION_ID_IMPORT = 2;
+
+// im*:vec(import)
+export function importsec(ims: ByteArray[]): ByteArray[] {
+  return section(SECTION_ID_IMPORT, vec(ims));
+}
+
+export const importdesc = {
+  // x: typeidx
+  func(idx: number): ByteArray[] {
+    // One byte indicating kind of import (function)
+    // and index to the type section
+    return [0x00, typeidx(idx)];
+  },
+}
+
 export const localidx = (x: number) => u32(x);
 export function locals(n: number, type: Byte): ByteArray[] {
   return [u32(n), type];
@@ -79,3 +100,4 @@ export function locals(n: number, type: Byte): ByteArray[] {
 function name(s: string): ByteArray {
   return vec(stringToBytes(s));
 }
+
