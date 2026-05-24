@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert";
-import { typesec, typeidx, funcsec, functype, codesec, code, func, exportsec, export_ } from "../../src/wasm/sections";
+import { typesec, typeidx, funcsec, functype, codesec, code, func, exportsec, export_, import_, importdesc, importsec } from "../../src/wasm/sections";
 import { flatten } from "../../src/wasm/utils";
 import { instr } from "../../src/wasm/instructions";
 
@@ -68,4 +68,27 @@ test('exportsec wraps exports in a section', () => {
   const result = exportsec([export_('main', [0x00, [0]])]);
   // section id 7
   assert.strictEqual(result[0], 7);
+});
+
+test('importdesc func encodes kind and type index', () => {
+  assert.deepStrictEqual(importdesc.func(0), [0x00, [0]]);
+  assert.deepStrictEqual(importdesc.func(1), [0x00, [1]]);
+});
+
+test('import_ encodes module name, import name, and importdesc', () => {
+  const result = import_('env', 'add', importdesc.func(0));
+  assert.deepStrictEqual(result, [
+    [[3], [0x65, 0x6e, 0x76]],
+    [[3], [0x61, 0x64, 0x64]],
+    [0x00, [0]],
+  ]);
+});
+
+test('importsec wraps imports in a section', () => {
+  const result = importsec([import_('env', 'add', importdesc.func(0))]);
+  assert.strictEqual(result[0], 2);
+  assert.deepStrictEqual(
+    flatten(result),
+    [2, 11, 1, 3, 0x65, 0x6e, 0x76, 3, 0x61, 0x64, 0x64, 0x00, 0],
+  );
 });
