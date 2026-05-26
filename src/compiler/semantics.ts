@@ -2,7 +2,7 @@ import { i32 } from "../wasm/encoding";
 import { blocktype, instr, labelidx, valtype } from "../wasm/instructions";
 import { Node, Semantics } from "ohm-js";
 import { resolveSymbol, Scope, Symbol } from "./symbol";
-import { funcidx, localidx, locals } from "../wasm/sections";
+import { funcidx, localidx, locals, memarg } from "../wasm/sections";
 
 export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
   const scopes: Scope[] = [symbolTable];
@@ -58,9 +58,23 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
       return result;
     },
     // Leave the value on the stack
-    AssignmentExpr(ident, _, expr) {
+    AssignmentExpr_var(ident, _, expr) {
       const info = resolveSymbol(ident, scopes.at(-1));
       return [expr.toWasm(), instr.local.tee, localidx(info.idx)];
+    },
+    AssignmentExpr_array(ident, _lbracket, idxExpr, _rbracket, _, expr) {
+      const tempVar = scopes.at(-1).locals.get('$temp');
+      if (ident.sourceString === "__mem") {
+        return [
+          idxExpr.toWasm(),
+          expr.toWasm(),
+          // We must leave a value on a stack for __mem
+          [instr.local.tee, localidx(tempVar.idx)], // Save value but leave original value on stack
+          // Array accesses should be aligned to a four-byte boundary?
+          [instr.i32.store, memarg(2, 0)],
+          [instr.local.get, localidx(tempVar.idx)],
+        ]
+      }
     },
     // Case label for _paren alternative
     PrimaryExpr_paren(_lparen, expr, _rparen) {
@@ -69,6 +83,15 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
     PrimaryExpr_var(ident) {
       const info = resolveSymbol(ident, scopes.at(-1));
       return [instr.local.get, localidx(info.idx)];
+    },
+    PrimaryExpr_index(ident, _lbracket, idxExpr, _rbracket) {
+      // Special variable name reserved for memory array
+      if (ident.sourceString === "__mem") {
+        // Load the offset onto the stack
+        return [idxExpr.toWasm(), instr.i32.load, memarg(0, 0)];
+      }
+      // TODO: Yet to support array structure
+      throw new Error('Not supported yet')
     },
     CallExpr(ident, _lparen, optArgs, _rparen) {
       const name = ident.sourceString;

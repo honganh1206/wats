@@ -1,5 +1,5 @@
 import { Byte, ByteArray } from "./encoding";
-import { code, codesec, export_, exportdesc, exportsec, func, funcsec, functype, import_, importdesc, importsec, typeidx, typesec } from "./sections";
+import { code, codesec, export_, exportdesc, exportsec, func, funcsec, functype, import_, importdesc, importsec, limits, mem, memsec, memtype, typeidx, typesec } from "./sections";
 import { flatten, stringToBytes } from "./utils";
 
 type FunctionDeclaration = {
@@ -24,12 +24,15 @@ export function buildModule(importDecls: FunctionDeclaration[], funcDecls: Funct
     // Make space for imported functions with very first indexes
     export_(f.name, exportdesc.func(i + importDecls.length)));
 
+  // Include a memory section
+  exports.push(export_('$watsMemory', exportdesc.mem(0)));
   const mod = module([
     // Type section with one entry of a function
     // with no arguments and return value
     typesec(types),
     importsec(imports),
     funcsec(funcs),
+    memsec([mem(memtype(limits.min(1)))]),
     // Export the function at index 0 under the name 'main'
     exportsec(exports),
     // Produce the body of the main function

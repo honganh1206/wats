@@ -43,7 +43,8 @@ export const grammarDef = `
     IfStmt = if Expr BlockStmts (else (BlockStmts|IfStmt))?
 
     //+ "x := 3", "y := 2 + 1"
-    AssignmentExpr = identifier ":=" Expr
+    AssignmentExpr = identifier ":=" Expr -- var
+                   | identifier "[" Expr "]" ":=" Expr -- array
 
     // Accept optional expressions
     //+ "42", "add(1, 2)", "if x { 42 } else { 99 }", "iffy := 0"
@@ -58,6 +59,7 @@ export const grammarDef = `
     PrimaryExpr = "(" Expr ")" -- paren
                 | number
                 | CallExpr
+                | identifier "[" Expr "]" -- index
                 | identifier -- var
                 | IfExpr
 

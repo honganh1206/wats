@@ -24,6 +24,9 @@ export const instr = {
     // Logical (bitwise) operators
     'and': 0x71,
     'or': 0x72,
+    // Read/write data from memory section
+    'load': 0x28,
+    'store': 0x36,
   },
   i64: {
     'const': 0x42,
@@ -52,6 +55,12 @@ export const instr = {
   br: 0x0c,
   // Break out of loop
   br_if: 0x0d,
+  memory: {
+    // Return the current size of a memory in pages
+    size: 0x3f, // [] -> [i32]with imports
+    // Grow memory by a given number of pages and return the previous size
+    grow: 0x40, // [i32] -> [i32]
+  },
 }
 
 export const valtype = {

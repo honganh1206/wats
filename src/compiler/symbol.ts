@@ -29,6 +29,7 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Sco
       return children.forEach((c) => c.buildSymbolTable());
     },
     LetStmt(_let, id, _eq, _expr, _) {
+      // Add a variable to the current scope
       const name = id.sourceString;
       const idx = scopes.at(-1).locals.size;
       const info: Symbol = { name, idx, what: 'local' };
@@ -39,8 +40,8 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Sco
       const childScope: Scope = {
         locals: new Map<string, Symbol>(),
         children: new Map<string, Scope>(),
+        // Init top-level symbol table
       };
-      // Init top-level symbol table
       scopes.at(-1).children.set(name, childScope);
     },
     FunctionDecl(_func, ident, _lparen, optParams, _rparen, blockExpr) {
@@ -54,6 +55,15 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Sco
       optParams.child(0)?.buildSymbolTable();
       blockExpr.buildSymbolTable();
       scopes.pop();
+    },
+    AssignmentExpr_array(_id, _lbracket, _idx, _rbracket, _, _expr) {
+      // Create a temp var to store the array's values in?
+      const name = '$temp';
+      if (!scopes.at(-1).locals.has(name)) {
+        const idx = scopes.at(-1).locals.size;
+        const info: Symbol = { name, idx, what: 'local' };
+        scopes.at(-1).locals.set(name, info);
+      }
     },
     // Treat params as local vars
     Params(ident, _, iterIdent) {

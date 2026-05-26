@@ -57,6 +57,10 @@ export const exportdesc = {
     // One byte 0x00 indicating the export type
     // and the index to the element to export
     return [0x00, funcidx(idx)];
+  },
+  mem(idx: number): ByteArray[] {
+    // Give an export description for a memory of a given index
+    return [0x02, memidx(idx)];
   }
 }
 
@@ -95,6 +99,42 @@ export const localidx = (x: number) => u32(x);
 export function locals(n: number, type: Byte): ByteArray[] {
   return [u32(n), type];
 }
+
+const SECTION_ID_MEMORY = 5;
+
+export const memidx = (x: number) => u32(x);
+
+export function memsec(mems: ByteArray[][]): ByteArray[] {
+  return section(SECTION_ID_MEMORY, vec(mems));
+}
+
+export function mem(memtype: ByteArray[]): ByteArray[] {
+  return memtype;
+}
+
+export function memtype(limits: ByteArray[]): ByteArray[] {
+  return limits;
+}
+
+// Tell WASM to use alignment and static offset when interacting with memory
+// to calculate the final address of the value on the stack?
+export function memarg(align: number, offset: number): ByteArray[] {
+  // align param is a power-of-two exponent
+  // align = 0 -> Cannot promise addresses are nicely aligned
+  return [u32(align), u32(offset)];
+}
+
+export const limits = {
+  // n: u32
+  // Memory grows to any size (measured in pages)
+  min(n: number) {
+    return [0x00, u32(n)];
+  },
+  minmax(n: number, m: number) {
+    return [0x01, u32(n), u32(m)];
+  },
+}
+
 // A name is encoded as a vector of bytes
 // containing UTF-8 character sequence
 function name(s: string): ByteArray {

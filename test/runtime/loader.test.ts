@@ -5,7 +5,7 @@ import test from "node:test";
 import { buildModule } from "../../src/wasm/module";
 import { instr, valtype } from "../../src/wasm/instructions";
 import { i32 } from "../../src/wasm/encoding";
-import { funcidx, locals } from "../../src/wasm/sections";
+import { funcidx, locals, memarg, memidx } from "../../src/wasm/sections";
 
 test('compile bytes to WASM modules', () => {
   assert.equal(loadMod(compile('funk main() { let x = 42; x }')).main(), 42);
@@ -51,6 +51,105 @@ test('buildModule with imports', () => {
   assert.strictEqual(exports.main(), 43);
 })
 
+
+test('buildModule with memory', () => {
+  const importDecls = [];
+  const functionDecls = [
+    {
+      name: 'main',
+      paramTypes: [],
+      resultType: valtype.i32,
+      locals: [],
+      body: [
+        [instr.i32.const, i32(40), [instr.memory.grow, memidx(0)]],
+        [instr.memory.size, memidx(0)],
+        instr.i32.add,
+        instr.end,
+      ],
+    },
+  ];
+  const imports = {};
+  const exports = loadMod(buildModule(importDecls, functionDecls), imports);
+  // Export a WebAssembly.Memory instance
+  assert.ok(exports.$watsMemory);
+  assert.strictEqual(exports.main(), 42);
+
+  const PAGE_SIZE_IN_BYTES = 64 * 1024;
+  assert.strictEqual(
+    exports.$watsMemory.buffer.byteLength,
+    PAGE_SIZE_IN_BYTES * 41,
+  );
+});
+
+test('load from memory and store to memory', () => {
+  const importDecls = [];
+  const functionDecls = [
+    {
+      name: 'main',
+      paramTypes: [],
+      resultType: valtype.i32,
+      locals: [],
+      body: [
+        [instr.i32.const, i32(4)], // Address of value
+        [instr.i32.const, i32(42)], // Value
+        [instr.i32.store, memarg(0, 0)], // Store value at address + 0
+        [instr.i32.const, i32(4)],
+        [instr.i32.load, memarg(0, 0)],
+        instr.end,
+      ],
+    }
+  ];
+  const exports = loadMod(buildModule(importDecls, functionDecls));
+  assert.equal(exports.main(), 42);
+
+  // Verify contents of exported memory as little-endian
+  const view = new DataView(exports.$watsMemory.buffer);
+  // Get the 32-bit integer at offset 4
+  assert.equal(view.getInt32(4, true), 42);
+});
+
+test('raw memory access', () => {
+  const src = `
+    funk write() {
+      let offset = 0;
+      while offset < 256 {
+        __mem[offset] := 1;
+        // i32 so we set 4 bytes for a new value
+        offset := offset + 4;
+      }
+      0
+    }
+
+    // Sum of all values in memory
+    funk sum() {
+      let offset = 0;
+      let sum = 0;
+      while offset < 256 {
+        sum := sum + __mem[offset];
+        offset := offset + 4;
+      }
+      sum
+    }
+  `;
+
+  const mod = loadMod(compile(src), {});
+  mod.write();
+  // TODO: Why is sum equal to 64 here?
+  assert.strictEqual(mod.sum(), 64);
+
+  // Read exported memory directly
+  const view = new DataView(mod.$watsMemory.buffer);
+  let sum = 0;
+  for (let offset = 0; offset < 256; offset += 4) {
+    // Read in little-endian
+    // Each value occupies 4 bytes, so we have 256/4=64 iterations
+    // and since we set all values of the __mem array as 1
+    // the total value should be 64
+    sum += view.getInt32(offset, true);
+  }
+  assert.strictEqual(sum, 64);
+});
+
 test('module with multiple functions', () => {
   assert.deepEqual(
     loadMod(compile('funk main() { let x = 42; x }')).main(),
@@ -62,8 +161,27 @@ test('module with multiple functions', () => {
     ).doIt(),
     3,
   );
-})
+});
 
+test('unaligned memory access', () => {
+  const src = `
+    funk unalignedStoreAndLoad() {
+      __mem[1] := 42;
+      // Should return 2a,00,00,00
+      __mem[1]
+    }
+
+    funk unalignedStoreAlignedLoad() {
+      __mem[1] := 42;
+      // Should return 00,2a,00,00
+      __mem[0]
+    }
+
+  `
+  const mod = loadMod(compile(src), {});
+  assert.strictEqual(mod.unalignedStoreAndLoad(), 0x2a); // 0x2a = 42
+  assert.strictEqual(mod.unalignedStoreAlignedLoad(), 0x2a00);
+});
 
 test('module with imports', () => {
   const imports = {
