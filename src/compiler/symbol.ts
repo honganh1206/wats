@@ -5,6 +5,7 @@ export type Scope = {
   locals: Map<string, Symbol>;
   // Nested function scopes
   children: Map<string, Scope>;
+  kind: 'import' | 'function';
 };
 
 export type Symbol = {
@@ -20,7 +21,7 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Sco
   // since there might be a case where toWasm() gets invoked before buildSymbolTable()
   // leading to a runtime crash
   const tempSemantics = parser.createSemantics();
-  const scopes: [Scope] = [{ locals: new Map<string, Symbol>(), children: new Map<string, Scope>() }];
+  const scopes: [Scope] = [{ locals: new Map<string, Symbol>(), children: new Map<string, Scope>(), kind: 'function' }];
   tempSemantics.addOperation('buildSymbolTable', {
     // Single, generic action
     // in case there is no matching action.
@@ -40,6 +41,7 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Sco
       const childScope: Scope = {
         locals: new Map<string, Symbol>(),
         children: new Map<string, Scope>(),
+        kind: 'import',
         // Init top-level symbol table
       };
       scopes.at(-1).children.set(name, childScope);
@@ -49,6 +51,7 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Sco
       const childScope: Scope = {
         locals: new Map<string, Symbol>(),
         children: new Map<string, Scope>(),
+        kind: 'function',
       };
       scopes.at(-1).children.set(name, childScope);
       scopes.push(childScope);

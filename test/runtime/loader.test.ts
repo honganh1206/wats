@@ -183,6 +183,50 @@ test('unaligned memory access', () => {
   assert.strictEqual(mod.unalignedStoreAlignedLoad(), 0x2a00);
 });
 
+
+test('i32 arrays', () => {
+  const src = `
+    funk write(arr, len) {
+      // Write value 1 to 64 entries of arr?
+      let idx = 0;
+      while idx < len {
+        arr[idx] := 1;
+        idx := idx + 1;
+      }
+      0
+    }
+
+    funk sum(arr, len) {
+      let idx = 0;
+      let sum = 0;
+      while idx < len {
+        sum := sum + arr[idx];
+        idx := idx + 1;
+      }
+      sum
+    }
+  `;
+
+  const mod = loadMod(compile(src), {});
+  const arr = mod.newInt32Array(64);
+  assert.strictEqual(mod.sum(arr, 64), 0);
+  mod.write(arr, 64);
+  assert.strictEqual(mod.sum(arr, 64), 64);
+});
+
+test('bounds checking', () => {
+  const src = `
+    funk main() {
+      let arr = newInt32Array(1);
+      arr[0] := 42;
+      arr[1] := 99
+    }
+  `;
+  const mod = loadMod(compile(src), {});
+  assert.throws(() => mod.main(), /Unreachable/);
+});
+
+
 test('module with imports', () => {
   const imports = {
     watsImports: {

@@ -16,7 +16,7 @@ export function buildModule(importDecls: FunctionDeclaration[], funcDecls: Funct
     functype(f.paramTypes, [f.resultType]),
   );
   // Map functions with indexes of different sections
-  const funcs = funcDecls.map((_, i) => typeidx(i));
+  const funcs = funcDecls.map((_, i) => typeidx(i + importDecls.length));
   const codes = funcDecls.map((f) => code(func(f.locals, f.body)));
   const imports = importDecls.map((f, i) =>
     import_(f.module, f.name, importdesc.func(i)));

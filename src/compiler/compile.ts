@@ -2,9 +2,10 @@ import { parser } from "./grammar";
 import { buildSymbolTable } from "./symbol";
 import { defineFunctionDecls, defineImportDecls, defineToWasm } from "./semantics";
 import { buildModule } from "../wasm/module";
+import { prelude } from "../runtime/prelude";
 
 export function compile(src: string): Uint8Array<ArrayBuffer> {
-  const matchResult = parser.match(src);
+  const matchResult = parser.match(prelude + src);
   if (matchResult.failed()) {
     // NOTE: Type narrowing from MatchResult to FailedMatchResult
     throw new Error(matchResult.message);

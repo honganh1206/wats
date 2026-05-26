@@ -6,6 +6,27 @@ import { funcidx, localidx, locals, memarg } from "../wasm/sections";
 
 export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
   const scopes: Scope[] = [symbolTable];
+  const funcCall = (name: string) => {
+    if (name == '__trap') return [instr.unreachable];
+    const functions = Array.from(scopes[0].children.entries());
+    // Call imported functions
+    const imports = functions.filter(([, scope]) => scope.kind === 'import');
+    const importedIdx = imports.findIndex(([funcName]) => funcName === name);
+    if (importedIdx >= 0) {
+      return [instr.call, funcidx(importedIdx)];
+    }
+
+    // Call local functions
+    const localIdx = functions
+      .filter(([, scope]) => scope.kind !== 'import')
+      .findIndex(([funcName]) => funcName === name);
+    if (localIdx < 0) {
+      throw Error(`no such function '${name}'`);
+    }
+
+    return [instr.call, funcidx(imports.length + localIdx)];
+  };
+
   semantics.addOperation('toWasm', {
     FunctionDecl(_func, ident, _lparen, optParams, _rparen, blockExpr) {
       // Get the local scope of the function
@@ -70,11 +91,18 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
           expr.toWasm(),
           // We must leave a value on a stack for __mem
           [instr.local.tee, localidx(tempVar.idx)], // Save value but leave original value on stack
-          // Array accesses should be aligned to a four-byte boundary?
+          // Array accesses should be aligned to a four-byte boundary
           [instr.i32.store, memarg(2, 0)],
           [instr.local.get, localidx(tempVar.idx)],
         ]
       }
+      const varInfo = resolveSymbol(ident, scopes.at(-1));
+      return [
+        [instr.local.get, localidx(varInfo.idx)], // Arg 0 as arr
+        idxExpr.toWasm(), // Arg 1 as idx
+        expr.toWasm(),
+        funcCall('__writeInt32Array'),
+      ];
     },
     // Case label for _paren alternative
     PrimaryExpr_paren(_lparen, expr, _rparen) {
@@ -88,21 +116,18 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
       // Special variable name reserved for memory array
       if (ident.sourceString === "__mem") {
         // Load the offset onto the stack
-        return [idxExpr.toWasm(), instr.i32.load, memarg(0, 0)];
+        return [idxExpr.toWasm(), instr.i32.load, memarg(2, 0)];
       }
-      // TODO: Yet to support array structure
-      throw new Error('Not supported yet')
+      const varInfo = resolveSymbol(ident, scopes.at(-1));
+      return [
+        [instr.local.get, localidx(varInfo.idx)], // Arg 0 as arr
+        idxExpr.toWasm(), // Arg 1 as idx
+        funcCall('__readInt32Array'),
+      ];
     },
     CallExpr(ident, _lparen, optArgs, _rparen) {
       const name = ident.sourceString;
-      // Get all funk names from top-level symbol table
-      const funkNames = Array.from(scopes[0].children.keys());
-      const idx = funkNames.indexOf(name);
-      return [
-        // Emit arg bytecodes first, then call instruction
-        optArgs.children.map((c) => c.toWasm()),
-        [instr.call, funcidx(idx)],
-      ];
+      return [optArgs.children.map((c) => c.toWasm()), funcCall(name)];
     },
     Args(expr, _, iterExpr) {
       return [expr, ...iterExpr.children].map((c) => c.toWasm());

@@ -61,6 +61,7 @@ export const instr = {
     // Grow memory by a given number of pages and return the previous size
     grow: 0x40, // [i32] -> [i32]
   },
+  unreachable: 0x00,
 }
 
 export const valtype = {
