@@ -3,6 +3,8 @@ import { buildSymbolTable } from "./symbol";
 import { defineFunctionDecls, defineImportDecls, defineToWasm } from "./semantics";
 import { buildModule } from "../wasm/module";
 import { prelude } from "../runtime/prelude";
+import { buildStringTable } from "./strings";
+import { DataSegment, int32ToBytes } from "../wasm/encoding";
 
 export function compile(src: string): Uint8Array<ArrayBuffer> {
   const matchResult = parser.match(prelude + src);
@@ -15,15 +17,21 @@ export function compile(src: string): Uint8Array<ArrayBuffer> {
   const semantics = parser.createSemantics();
 
   // Top-level symbol table with a single key 'Main'
-  const st = buildSymbolTable(parser, matchResult);
-  defineToWasm(semantics, st);
+  const symbolTable = buildSymbolTable(parser, matchResult);
+  const stringTable = buildStringTable(parser, matchResult);
+  defineToWasm(semantics, symbolTable, stringTable);
   defineImportDecls(semantics);
-  defineFunctionDecls(semantics, st);
+  defineFunctionDecls(semantics, symbolTable);
 
   const importDecls = semantics(matchResult).importDecls();
-  // Visit all top-level func decls,
-  // and return an object for each decl
+  // Visit all top-level function declarations,
+  // and return an object for each declaration
   const funcDecls = semantics(matchResult).functionDecls();
-  return buildModule(importDecls, funcDecls)
+  const heapBase = stringTable.data.length;
+  const dataSegs: DataSegment[] = [
+    { offset: 0, bytes: stringTable.data },
+    { offset: heapBase, bytes: int32ToBytes(heapBase + 4) },
+  ];
+  return buildModule(importDecls, funcDecls, dataSegs);
 }
 

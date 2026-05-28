@@ -16,13 +16,13 @@ export type Symbol = {
 
 // Map function name to local symbol table
 // and return the first Scope as the symbol table
-export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Scope {
+export function buildSymbolTable(grammar: Grammar, matchResult: MatchResult): Scope {
   // We have a separate instance of semantics here
   // since there might be a case where toWasm() gets invoked before buildSymbolTable()
   // leading to a runtime crash
-  const tempSemantics = parser.createSemantics();
+  const semantics = grammar.createSemantics();
   const scopes: [Scope] = [{ locals: new Map<string, Symbol>(), children: new Map<string, Scope>(), kind: 'function' }];
-  tempSemantics.addOperation('buildSymbolTable', {
+  semantics.addOperation('buildSymbolTable', {
     // Single, generic action
     // in case there is no matching action.
     _default(...children) {
@@ -78,7 +78,7 @@ export function buildSymbolTable(parser: Grammar, matchResult: MatchResult): Sco
       }
     }
   });
-  tempSemantics(matchResult).buildSymbolTable();
+  semantics(matchResult).buildSymbolTable();
   return scopes[0];
 }
 

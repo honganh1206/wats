@@ -2,9 +2,9 @@ import assert from "node:assert";
 import { compile } from "../../src/compiler/compile";
 import { loadMod } from "../../src/runtime/loader";
 import test from "node:test";
-import { buildModule } from "../../src/wasm/module";
+import { buildModule, FunctionDeclaration } from "../../src/wasm/module";
 import { instr, valtype } from "../../src/wasm/instructions";
-import { i32 } from "../../src/wasm/encoding";
+import { DataSegment, i32 } from "../../src/wasm/encoding";
 import { funcidx, locals, memarg, memidx } from "../../src/wasm/sections";
 
 test('compile bytes to WASM modules', () => {
@@ -47,15 +47,16 @@ test('buildModule with imports', () => {
   const imports = {
     basicMath: { addOne: (x: number) => x + 1 }
   };
-  const exports = loadMod(buildModule(importDecls, functionDecls), imports);
+  const exports = loadMod(buildModule(importDecls, functionDecls, []), imports);
   assert.strictEqual(exports.main(), 43);
 })
 
 
 test('buildModule with memory', () => {
-  const importDecls = [];
-  const functionDecls = [
+  const importDecls: FunctionDeclaration[] = [];
+  const functionDecls: FunctionDeclaration[] = [
     {
+      module: 'main',
       name: 'main',
       paramTypes: [],
       resultType: valtype.i32,
@@ -69,7 +70,7 @@ test('buildModule with memory', () => {
     },
   ];
   const imports = {};
-  const exports = loadMod(buildModule(importDecls, functionDecls), imports);
+  const exports = loadMod(buildModule(importDecls, functionDecls, []), imports);
   // Export a WebAssembly.Memory instance
   assert.ok(exports.$watsMemory);
   assert.strictEqual(exports.main(), 42);
@@ -82,9 +83,10 @@ test('buildModule with memory', () => {
 });
 
 test('load from memory and store to memory', () => {
-  const importDecls = [];
-  const functionDecls = [
+  const importDecls: FunctionDeclaration[] = [];
+  const functionDecls: FunctionDeclaration[] = [
     {
+      module: 'main',
       name: 'main',
       paramTypes: [],
       resultType: valtype.i32,
@@ -99,7 +101,7 @@ test('load from memory and store to memory', () => {
       ],
     }
   ];
-  const exports = loadMod(buildModule(importDecls, functionDecls));
+  const exports = loadMod(buildModule(importDecls, functionDecls, []), {});
   assert.equal(exports.main(), 42);
 
   // Verify contents of exported memory as little-endian
@@ -152,12 +154,13 @@ test('raw memory access', () => {
 
 test('module with multiple functions', () => {
   assert.deepEqual(
-    loadMod(compile('funk main() { let x = 42; x }')).main(),
+    loadMod(compile('funk main() { let x = 42; x }'), {}).main(),
     42,
   );
   assert.deepEqual(
     loadMod(
       compile('funk doIt() { add(1, 2) } funk add(x, y) { x + y }'),
+      {},
     ).doIt(),
     3,
   );
@@ -180,7 +183,8 @@ test('unaligned memory access', () => {
   `
   const mod = loadMod(compile(src), {});
   assert.strictEqual(mod.unalignedStoreAndLoad(), 0x2a); // 0x2a = 42
-  assert.strictEqual(mod.unalignedStoreAlignedLoad(), 0x2a00);
+  // Extra 4 bytes for heap bookeeping
+  assert.strictEqual(mod.unalignedStoreAlignedLoad(), 0x2a04);
 });
 
 
@@ -226,6 +230,39 @@ test('bounds checking', () => {
   assert.throws(() => mod.main(), /Unreachable/);
 });
 
+test('buildModule with data section', async () => {
+  const segs: DataSegment[] = [
+    { offset: 1, bytes: [0xab] },
+    { offset: 2, bytes: [0x12, 0x34] },
+  ];
+  const exports = loadMod(buildModule([], [], segs), {});
+  const mem = new DataView(exports.$watsMemory.buffer);
+  assert.strictEqual(mem.getUint8(0), 0x00);
+  assert.strictEqual(mem.getUint8(1), 0xab);
+  assert.strictEqual(mem.getUint8(2), 0x12);
+  assert.strictEqual(mem.getUint8(3), 0x34);
+})
+
+test('strings', () => {
+  const src = `
+    funk main() {
+      let s = "hey";
+      let arr = newInt32Array(1);
+      arr[0] := 42;
+      s
+    }
+  `;
+  const exports = loadMod(compile(src), {});
+  exports.main();
+
+  const view = new DataView(exports.$watsMemory.buffer);
+  const memInt32At = (idx: number) => view.getUint32(idx * 4, true);
+
+  assert.strictEqual(memInt32At(0), 'hey'.length);
+  assert.strictEqual(memInt32At(1), 'hey'.charCodeAt(0));
+  assert.strictEqual(memInt32At(2), 'hey'.charCodeAt(1));
+  assert.strictEqual(memInt32At(3), 'hey'.charCodeAt(2));
+});
 
 test('module with imports', () => {
   const imports = {
@@ -286,7 +323,7 @@ test('Wats comparison operators', () => {
       funk eq(a, b) { a == b }
       funk and_(a, b) { a & b }
       funk or_(a, b) { a | b }
-`),
+`), {}
   );
   assert.strictEqual(mod.greaterThan(43, 42), 1);
   assert.strictEqual(mod.greaterThan(42, 43), 0);
@@ -310,7 +347,7 @@ test('Wats while loops', () => {
         }
         x
       }
-    `)
+    `), {}
   )
 
   assert.strictEqual(mod.countTo(10), 10);
@@ -330,7 +367,7 @@ test('Wats conditionals, comparisons, and loops', () => {
       funk compare(a, b) {
         if a < b { 0 - 1 } else if a > b { 1 } else { 0 }
       }
-`),
+`), {}
   );
   assert.strictEqual(mod.countTo(10), 10);
   assert.strictEqual(mod.countTo(-1), 0);

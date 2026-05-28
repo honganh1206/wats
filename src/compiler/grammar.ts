@@ -58,6 +58,7 @@ export const grammarDef = `
     // and expression could be either a number or an identifier
     PrimaryExpr = "(" Expr ")" -- paren
                 | number
+                | stringLiteral
                 | CallExpr
                 | identifier "[" Expr "]" -- index
                 | identifier -- var
@@ -98,6 +99,10 @@ export const grammarDef = `
     // snake_case naming convention
     identStart = letter | "_"
     identPart = letter | "_" | digit
+
+    // Capture everything inside the double quotes
+    stringLiteral = quote (~quote any)* quote
+    quote = "\\""
 
     // Comments in Wats. 
     // Use space rule to treat anything after // as white space

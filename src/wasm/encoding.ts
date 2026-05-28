@@ -5,6 +5,11 @@ export type Byte = number;
 // structures first and flatten them only when the final module is emitted.
 export type ByteArray = Byte | ByteArray[];
 
+export type DataSegment = {
+  offset: number,
+  bytes: ByteArray[],
+}
+
 const MIN_U32 = 0;
 const MAX_U32 = 2 ** 32 - 1;
 
@@ -120,4 +125,19 @@ export function sleb128(v: number | bigint): ByteArray[] {
   }
 
   return r;
+}
+
+export function int32ToBytes(value: number): ByteArray[] {
+  // Reject anything outside of i32 range
+  if (value < -(2 ** 31) || value > 2 ** 31 - 1) {
+    throw Error(`Value out of range for int32: ${value}`);
+  }
+
+  return [
+    // Encode the length + string to hexadecimal values
+    value & 0xff,
+    (value >> 8) & 0xff,
+    (value >> 16) & 0xff,
+    (value >> 24) & 0xff,
+  ];
 }

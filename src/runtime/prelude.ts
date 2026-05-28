@@ -1,18 +1,13 @@
 // Code implicitly included in all scripts
 export const prelude = `
   // Memory will never be freed until module is unloaded
+
   funk newInt32Array(len) {
     // Where unallocated region begins
-    let freeOffset = __mem[0];
+    let freeOffset = __mem[__heap_base];
 
-    if freeOffset == 0 {
-      // Lowest valid offset starts at 4
-      // since we need the first 4 bytes for bookkeeping (tracking where unallocated region starts)
-      freeOffset := 4;
-    }
-
-    // Update bookkeeping
-    __mem[0] := freeOffset + (len * 4) + 4;
+    // __heap_base holds the offset where statically allocated memory ends, and dynamically allocated memory begins
+    __mem[__heap_base] := freeOffset + (len * 4) + 4;
     // Allocate the memory region for the new array
     __mem[freeOffset] := len;
     freeOffset

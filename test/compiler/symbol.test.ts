@@ -14,7 +14,7 @@ test('build symbol table', () => {
 
   assert.deepEqual(getVarNames('funk main() { 42 }'), []);
   assert.deepEqual(getVarNames('funk main() { let x = 0; 42 }'), ['x']);
-  assert.deepEqual(getVarNames(' funk main() { let x = 0; let y = 1; 42 }'), ['x', 'y']);
+  assert.deepEqual(getVarNames('funk main() { let x = 0; let y = 1; 42 }'), ['x', 'y']);
 });
 
 test('resolve symbol table', () => {

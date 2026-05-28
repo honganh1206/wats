@@ -1,8 +1,9 @@
-import { Byte, ByteArray } from "./encoding";
-import { code, codesec, export_, exportdesc, exportsec, func, funcsec, functype, import_, importdesc, importsec, limits, mem, memsec, memtype, typeidx, typesec } from "./sections";
+import { Byte, ByteArray, DataSegment, i32 } from "./encoding";
+import { instr } from "./instructions";
+import { code, codesec, data, datasec, export_, exportdesc, exportsec, func, funcsec, functype, import_, importdesc, importsec, limits, mem, memidx, memsec, memtype, typeidx, typesec } from "./sections";
 import { flatten, stringToBytes } from "./utils";
 
-type FunctionDeclaration = {
+export type FunctionDeclaration = {
   module: string,
   name: string,
   paramTypes: Byte[],
@@ -11,7 +12,7 @@ type FunctionDeclaration = {
   body: (number | ByteArray[])[]
 }
 
-export function buildModule(importDecls: FunctionDeclaration[], funcDecls: FunctionDeclaration[]): Uint8Array<ArrayBuffer> {
+export function buildModule(importDecls: FunctionDeclaration[], funcDecls: FunctionDeclaration[], dataSegs: DataSegment[]): Uint8Array<ArrayBuffer> {
   const types = [...importDecls, ...funcDecls].map((f) =>
     functype(f.paramTypes, [f.resultType]),
   );
@@ -37,6 +38,17 @@ export function buildModule(importDecls: FunctionDeclaration[], funcDecls: Funct
     exportsec(exports),
     // Produce the body of the main function
     codesec(codes),
+    datasec(
+      dataSegs.map((seg: DataSegment) =>
+        data(
+          // Specify initializing the only memory in WASM 1.0
+          memidx(0),
+          // Specify the constant offset where data is stored in memory
+          [[instr.i32.const, i32(seg.offset)], instr.end],
+          seg.bytes,
+        ),
+      ),
+    )
   ]);
 
   return Uint8Array.from(flatten(mod));

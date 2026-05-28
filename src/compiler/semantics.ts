@@ -2,9 +2,10 @@ import { i32 } from "../wasm/encoding";
 import { blocktype, instr, labelidx, valtype } from "../wasm/instructions";
 import { Node, Semantics } from "ohm-js";
 import { resolveSymbol, Scope, Symbol } from "./symbol";
-import { funcidx, localidx, locals, memarg } from "../wasm/sections";
+import { data, funcidx, localidx, locals, memarg } from "../wasm/sections";
+import { StringTable } from "./strings";
 
-export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
+export function defineToWasm(semantics: Semantics, symbolTable: Scope, stringTable: StringTable) {
   const scopes: Scope[] = [symbolTable];
   const funcCall = (name: string) => {
     if (name == '__trap') return [instr.unreachable];
@@ -109,6 +110,9 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
       return expr.toWasm();
     },
     PrimaryExpr_var(ident) {
+      if (ident.sourceString === '__heap_base') {
+        return [instr.i32.const, i32(stringTable.data.length)];
+      }
       const info = resolveSymbol(ident, scopes.at(-1));
       return [instr.local.get, localidx(info.idx)];
     },
@@ -181,6 +185,11 @@ export function defineToWasm(semantics: Semantics, symbolTable: Scope) {
       //  can call each other
       const value = parseInt(this.sourceString, 10);
       return [instr.i32.const, ...i32(value)];
+    },
+    stringLiteral(_lquote, chars, _rquote) {
+      const addr = stringTable.offsets.get(chars.sourceString);
+      // Get the value at the specific index of the string table
+      return [instr.i32.const, i32(addr)];
     },
   });
 }

@@ -135,6 +135,19 @@ export const limits = {
   },
 }
 
+const SECTION_ID_DATA = 11;
+
+// x:memidx - Type of memory to be init (WASM 1.0 supports one memory)
+// e:expr - Specify offset in memory
+// bs:vec(byte) - Bytes to be copied
+export function data(x: ByteArray[], e: ByteArray[], bs: ByteArray[]): ByteArray[][] {
+  return [x, e, vec(bs)];
+}
+
+export function datasec(sgmts: ByteArray[][]): ByteArray[] {
+  return section(SECTION_ID_DATA, vec(sgmts));
+}
+
 // A name is encoded as a vector of bytes
 // containing UTF-8 character sequence
 function name(s: string): ByteArray {
