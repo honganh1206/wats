@@ -3,8 +3,38 @@
   import { runWats, type RunResult } from "$lib/wats";
 
   const STORAGE_KEY = "wats-playground-src";
-  const SEED = `funk main() {
-  print(add(41, one()))
+  const SEED = `funk fib(n) {
+  let prev = 0;
+  let curr = 1;
+  let idx = 0;
+
+  while idx < n {
+    let next = prev + curr;
+    prev := curr;
+    curr := next;
+    idx := idx + 1;
+  }
+
+  prev
+}
+
+funk main() {
+  let title = "wats";
+  let values = newInt32Array(4);
+  let idx = 0;
+  let total = 0;
+
+  while idx < 4 {
+    values[idx] := fib(idx + one());
+    total := add(total, values[idx]);
+    idx := idx + 1;
+  }
+
+  let ok = total >= 7 & total != 0;
+  let result = if ok { total } else { 0 };
+
+  print(title);
+  print(result)
 }
 `;
   const BUILT_INS = [
